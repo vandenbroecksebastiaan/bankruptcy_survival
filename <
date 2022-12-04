@@ -1,0 +1,45 @@
+library(survival)
+library(survminer)
+library(smcure)
+library(cmprsk)
+options(scipen=999)
+
+data <- read.csv("data/bankruptcy_transformed.csv")
+data <- na.omit(data)
+data$censor <- ifelse(data$event_indicator==3, 1, 0)
+
+# Plot survival curve
+fit <- survfit(Surv(years_to_event, censor)~1, data=data)
+jpeg(file="visualizations/km_bankruptcy.jpeg")
+ggsurvplot(fit, data=data)
+dev.off()
+
+# Cox PH model
+# coxph(Surv(years_to_event, censor)~mean_pl+mean_total_assets, data=data)
+
+# Population mixture cure model
+# smcure(Surv(years_to_event, censor)~mean_pl+mean_total_assets,
+#        cureform=~mean_pl+mean_total_assets, model="ph", Var=TRUE,
+#        data=data)
+
+# Competing risk Cox PH on the subdistribution hazard
+# NOTE: failcode 0 should be a censored observation
+cov <- cbind(data$mean_pl, data$mean_total_assets)
+
+c1 <- crr(data$years_to_event, data$event_indicator, cov, failcode=1)
+c2 <- crr(data$years_to_event, data$event_indicator, cov, failcode=2)
+c3 <- crr(data$years_to_event, data$event_indicator, cov, failcode=3)
+
+pc1 <- predict(c1, rbind(c(1, 1), c(0, 1)))
+pc2 <- predict(c2, rbind(c(1, 1), c(0, 1)))
+pc3 <- predict(c3, rbind(c(1, 1), c(0, 1)))
+
+jpeg(file="visualizations/temp.jpeg", width=1000, height=300, dpi=200)
+par(mfrow=c(1, 3))
+plot(pc1, col=c(1,2), lty=1, xlim=c(0,70), ylim=c(0,0.8), main="1",
+     xlab="Time",ylab="Probability")
+plot(pc2, col=c(1,2), lty=1, xlim=c(0,70), ylim=c(0,0.8), main="2",
+     xlab="Time",ylab="Probability")
+plot(pc3, col=c(1,2), lty=1, xlim=c(0,70), ylim=c(0,0.8), main="3",
+     xlab="Time",ylab="Probability")
+dev.off()
