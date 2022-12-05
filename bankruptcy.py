@@ -4,7 +4,7 @@ import numpy as np
 
 class BankruptcyDataset:
     def __init__(self, path):
-        self.df = self._read_df(path)
+        self.df = self.__read_df(path)
 
 
     def create_transf_df(self):
@@ -12,21 +12,22 @@ class BankruptcyDataset:
         for further analysis."""
         self.transf_df = pd.DataFrame(index=self.df.index.unique())
         self.transf_df.index = self.transf_df.index.rename("index")
-        self._add_status()
-        self._add_status_indicator()
+        self.__add_status()
+        self.__add_status_indicator()
 
         # Only keep companies with the following status
         self.transf_df = self.transf_df[self.transf_df["status"].isin(
             ["Liquidation", "Bankruptcy", "Merger by absorption"]
         )]
     
-        self._add_mean_pl()
-        self._add_mean_total_assets()
-        self._add_mean_n_employees()
-        self._add_legal_form()
+        self.__add_mean_pl()
+        self.__add_mean_total_assets()
+        self.__add_mean_n_employees()
+        self.__add_legal_form()
+        self.__add_main_activity()
 
 
-    def _read_df(self, path):
+    def __read_df(self, path):
         df = pd.read_csv(path, delimiter="\t", encoding="UTF-16 LE")
         df = df[df["Mark"].notna()]
         df["Mark"] = df["Mark"].fillna(method="ffill")
@@ -34,7 +35,7 @@ class BankruptcyDataset:
         return df
     
     
-    def _add_status(self):
+    def __add_status(self):
         """Adds a status, for example bankruptcy, to the transformed dataframe.
         It also calculates a lower bound on the years to that status."""
         # Add status to new df
@@ -64,7 +65,7 @@ class BankruptcyDataset:
             .astype(int)
     
     
-    def _add_status_indicator(self):
+    def __add_status_indicator(self):
         """Adds a new column to the transformed dataframe which contains a
         unique int value for each status."""
         indicator_map = self.transf_df["status"].unique().tolist()
@@ -78,7 +79,7 @@ class BankruptcyDataset:
         ]
     
     
-    def _add_mean_pl(self):
+    def __add_mean_pl(self):
         """Adds the mean profit loss in thousands of all profit loss columns
         contained in the original dataframe."""
         cols = [i for i in self.df.columns if "P/L" in i]
@@ -87,7 +88,7 @@ class BankruptcyDataset:
         self.transf_df["mean_pl"] = self.transf_df["mean_pl"] / 1000
     
     
-    def _add_mean_cash_flow(self):
+    def __add_mean_cash_flow(self):
         """Adds the mean cash flow of all cash flow columns
         contained in the original dataframe."""
         cols = [i for i in self.df.columns if "Cash flow" in i]
@@ -95,7 +96,7 @@ class BankruptcyDataset:
         self.transf_df["mean_cash_flow"] = self.df[cols].fillna(0).mean(axis=1)
     
     
-    def _add_mean_total_assets(self):
+    def __add_mean_total_assets(self):
         """Adds the mean total assets of all total asset columns
         contained in the original dataframe."""
         cols = [i for i in self.df.columns if "Total assets" in i]
@@ -105,7 +106,7 @@ class BankruptcyDataset:
             / 1000
     
     
-    def _add_mean_profit_margin(self):
+    def __add_mean_profit_margin(self):
         """Adds the mean profit margin of all profit margin columns
         contained in the original dataframe."""
         cols = [i for i in self.df.columns if "Profit margin" in i]
@@ -113,7 +114,7 @@ class BankruptcyDataset:
         self.transf_df["mean_profit_margin"] = self.df[cols].fillna(0).mean(axis=1)
     
     
-    def _add_mean_n_employees(self):
+    def __add_mean_n_employees(self):
         """Adds the mean number of employees of all relevant columns
         contained in the original dataframe."""
         cols = [i for i in self.df.columns if "employees" in i]
@@ -121,7 +122,7 @@ class BankruptcyDataset:
         self.transf_df["mean_n_employees"] = self.df[cols].fillna(0).mean(axis=1)
     
     
-    def add_n_legal_events(self):
+    def __add_n_legal_events(self):
         """Adds the number of legal events of the entire lifetime of the
         company."""
         self.transf_df["n_legal_events"] = self.df["Legal events - Date"]\
@@ -130,12 +131,12 @@ class BankruptcyDataset:
         self.transf_df["n_legal_events"] = self.transf_df["n_legal_events"] + 1
     
     
-    def _add_peer_group_size(self):
+    def __add_peer_group_size(self):
         self.transf_df["peer_group_size"] = self.df["Peer Group Size"]
         return self.transf_df
     
     
-    def _add_legal_form(self):
+    def __add_legal_form(self):
         """Adds a column legal form to the transformed dataframe which
         indicates whether the company is public, private, cooperative, nonprofit
         or of another type."""
@@ -199,15 +200,50 @@ class BankruptcyDataset:
                                         how="left", left_index=True,
                                         right_index=True)
 
+    def __add_main_activity(self):
+        print(self.df["Main activity"].value_counts())
+        services_list = [
+            "Services", "Services; Manufacturing", "Services; Wholesale",
+            "Services; Retail", "Services; Venture capital firm"
+        ]
+        manufacturing_list = [
+            "Manufacturing", "Manufacturing; Wholesale",
+            "Manufacturing; Services", "Manufacturing; Retail",
+            "Manufacturing; Wholesale; Services"
+        ]
+        retail_list = [
+            "Retail", "Retail; Services"
+        ]
+        wholesale_list = [
+            "Wholesale", "Wholesale; Services", "Wholesale; Retail"
+        ]
+        categories = [services_list, manufacturing_list, retail_list,
+                      wholesale_list]
+        labels = ["services", "manufacturing", "retail", "wholesale"]
+
+        remap = {}
+        for i, j in zip(categories, labels):
+            for k in i:
+                remap[k] = j
+    
+        self.df["Main activity"] = self.df["Main activity"].replace(remap)
+    
+        # Create dummies
+        self.transf_df = self.transf_df.merge(pd.get_dummies(self.df["Main activity"]),
+                                        how="left", left_index=True,
+                                        right_index=True)
+
+
     def df_to_csv(self):
         self.df.to_csv("data/temp_df.csv")
+
 
     def to_csv(self):
         self.transf_df.to_csv("data/bankruptcy_transformed.csv")
 
 
 def main():
-    dataset = BankruptcyDataset(path="data/Bel-first_Export_2.txt")
+    dataset = BankruptcyDataset(path="data/Bel-first_Export_3.txt")
     dataset.create_transf_df()
     dataset.df_to_csv()
     dataset.to_csv()
