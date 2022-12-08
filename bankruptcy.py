@@ -24,7 +24,8 @@ class BankruptcyDataset:
         self.__add_mean_total_assets()
         self.__add_mean_n_employees()
         self.__add_legal_form()
-        self.__add_main_activity()
+        self.__add_peer_group()
+        self.__add_size()
 
 
     def __read_df(self, path):
@@ -200,38 +201,12 @@ class BankruptcyDataset:
                                         how="left", left_index=True,
                                         right_index=True)
 
-    def __add_main_activity(self):
-        print(self.df["Main activity"].value_counts())
-        services_list = [
-            "Services", "Services; Manufacturing", "Services; Wholesale",
-            "Services; Retail", "Services; Venture capital firm"
-        ]
-        manufacturing_list = [
-            "Manufacturing", "Manufacturing; Wholesale",
-            "Manufacturing; Services", "Manufacturing; Retail",
-            "Manufacturing; Wholesale; Services"
-        ]
-        retail_list = [
-            "Retail", "Retail; Services"
-        ]
-        wholesale_list = [
-            "Wholesale", "Wholesale; Services", "Wholesale; Retail"
-        ]
-        categories = [services_list, manufacturing_list, retail_list,
-                      wholesale_list]
-        labels = ["services", "manufacturing", "retail", "wholesale"]
+    def __add_peer_group(self):
+        self.transf_df["peer_group"] = self.df["Peer Group Description"]
 
-        remap = {}
-        for i, j in zip(categories, labels):
-            for k in i:
-                remap[k] = j
-    
-        self.df["Main activity"] = self.df["Main activity"].replace(remap)
-    
-        # Create dummies
-        self.transf_df = self.transf_df.merge(pd.get_dummies(self.df["Main activity"]),
-                                        how="left", left_index=True,
-                                        right_index=True)
+
+    def __add_size(self):
+        self.transf_df["size"] = self.df["Category of the company"]
 
 
     def df_to_csv(self):
@@ -243,8 +218,8 @@ class BankruptcyDataset:
 
 
 def main():
-    dataset = BankruptcyDataset(path="data/Bel-first_Export_3.txt")
-    dataset.create_transf_df()
+    dataset = BankruptcyDataset(path="data/Bel-first_Export_4.txt")
+    dataset.create_transf_df()    
     dataset.df_to_csv()
     dataset.to_csv()
 
