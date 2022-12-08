@@ -2,32 +2,50 @@ library(survival)
 library(survminer)
 library(smcure)
 library(cmprsk)
+library(plm)
 options(scipen = 999)
 
 data <- read.csv("data/bankruptcy_transformed.csv")
 data <- na.omit(data)
+print(colnames(data))
 data$censor <- ifelse(data$event_indicator == 2, 1, 0)
 
 # Kendall's tau
 # cor.test(data$years_to_event, data$event_indicator, method="kendall")
 
 # Plot survival curve
-fit <- survfit(Surv(years_to_event, censor)~1, data = data)
-jpeg(file = "visualizations/km_bankruptcy.jpeg")
-ggsurvplot(fit, data = data)
+# fit <- survfit(Surv(years_to_event, censor)~1, data = data)
+# jpeg(file = "visualizations/km_bankruptcy.jpeg")
+# ggsurvplot(fit, data = data)
 
 # Cox PH model
-cox0 <- coxph(Surv(years_to_event, censor) ~ mean_pl + mean_total_assets
-             + mean_n_employees + cooperative + nonprofit + other + private,
-             data = data)
+# cox0 <- coxph(Surv(years_to_event, censor) ~
+#               total_liabilities_by_net_assets +
+#             # cash_by_total_assets +
+#             # cash_by_current_liabilities +
+#               current_assets_by_current_liabilities +
+#               tax +
+#               EBTIDA +
+#               financial_expenses_by_total_assets +
+#               EBIT +
+#               working_capital_by_total_assets +
+#               income_tax_by_total_assets +
+#               cooperative +
+#               nonprofit +
+#               other +
+#               private,
+#              data = data)
 
-coefficients_cox <- cox0$coefficients
-stand_e_cox <- sqrt(diag(cox0$var))
-p_value_cox <- 2 * (1 - pnorm(abs(coefficients_cox / stand_e_cox),
-                  lower.tail = TRUE))
 
-cox_summary <- data.frame(coefficients_cox, stand_e_cox, p_value_cox)
-write.csv(cox_summary, "data/cox_summary.csv")
+# cox0
+
+# coefficients_cox <- cox0$coefficients
+# stand_e_cox <- sqrt(diag(cox0$var))
+# p_value_cox <- 2 * (1 - pnorm(abs(coefficients_cox / stand_e_cox),
+#                   lower.tail = TRUE))
+
+# cox_summary <- data.frame(coefficients_cox, stand_e_cox, p_value_cox)
+# write.csv(cox_summary, "data/cox_summary.csv")
 
 # Population mixture cure model
 # smcure(Surv(years_to_event, censor)~mean_pl+mean_total_assets,
@@ -35,15 +53,44 @@ write.csv(cox_summary, "data/cox_summary.csv")
 #        data=data)
 
 # Competing risk Cox PH on the subdistribution hazard
-cov <- cbind(#data$mean_pl, data$mean_total_assets, data$mean_n_employees,
-             data$cooperative, data$nonprofit, data$other, data$private,
-             data$retail, data$services, data$wholesale)
-dimnames(cov)[[2]] <- c("Cooperative", "Nonprofit", "Other", "Private",
-                        "Retail", "Services", "Wholesale")
+cov <- cbind(# data$total_liabilities_by_net_assets,
+           # data$cash_by_total_assets,
+           # data$cash_by_current_liabilities,
+             data$current_assets_by_current_liabilities,
+             data$tax,
+           # data$EBTIDA,
+             data$financial_expenses_by_total_assets,
+           # data$EBIT,
+             data$working_capital_by_total_assets,
+             data$income_tax_by_total_assets,
+             data$cooperative,
+             data$nonprofit,
+             data$other,
+             data$private)
+dim(cov)
+dimnames(cov)[[2]] <- c(# "Total liabilities by net assets",
+                      # "Cash by total assets",
+                      # "Cash by current liabilities",
+                        "Current assets by current liabilities",
+                        "Tax",
+                      # "EBITDA",
+                        "Financial expenses by total assets",
+                      # "EBIT",
+                        "Working capital by total assets",
+                        "Income tax by total assets",
+                        "Cooperative",
+                        "Nonprofit",
+                        "Other",
+                        "Private")
 
-c0 <- crr(data$years_to_event, data$event_indicator, cov, failcode = 0)
-c1 <- crr(data$years_to_event, data$event_indicator, cov, failcode = 1)
+# c0 <- crr(data$years_to_event, data$event_indicator, cov, failcode = 0)
+# c1 <- crr(data$years_to_event, data$event_indicator, cov, failcode = 1)
 c2 <- crr(data$years_to_event, data$event_indicator, cov, failcode = 2)
+
+c2$coef
+2 * (1 - pnorm(abs(c2$coef / sqrt(diag(c2$var))), lower.tail = TRUE))
+
+stop(0)
 
 # Create a table of coefficients
 coeff_liquidation <- c0$coef

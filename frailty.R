@@ -8,9 +8,9 @@ data <- read.csv("data/bankruptcy_transformed.csv")
 data <- na.omit(data)
 data$censor <- ifelse(data$event_indicator == 2, 1, 0)
 
-sel <- select.parfm(Surv(years_to_event, censor) ~ mean_pl + mean_total_assets
-                    + mean_n_employees + cooperative + nonprofit + other
-                    + private,
+cat("\n"); print(colnames(data)); print(dim(data)); cat("\n")
+
+sel <- select.parfm(Surv(years_to_event, censor) ~ .,
                     cluster = "size", data = data,
                     dist = c("exponential", "weibull", "lognormal"),
                     frailty = c("gamma", "ingau", "possta"))
