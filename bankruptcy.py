@@ -114,7 +114,6 @@ class BankruptcyDataset:
         print(self.transf_df.shape)
         self.transf_df = self.transf_df.replace([np.Inf, -np.Inf], np.nan)
         self.transf_df = self.transf_df.dropna(how="all")
-        print(self.transf_df.max())
         print(self.transf_df.shape)
 
 
@@ -384,6 +383,8 @@ class BankruptcyDataset:
 
     def __add_growth_variables(self):
         # TODO: add size classification
+        self.transf_df["size_classification"] = \
+            self.df["Category of the company"]
         # TODO: add number of employees as proxy for size
         pass
 
@@ -403,7 +404,7 @@ class BankruptcyDataset:
 
 
 def main():
-    dataset = BankruptcyDataset(path="data/Bel-first_Export_5.txt")
+    dataset = BankruptcyDataset(path="data/Bel-first_Export_6.txt")
     dataset.create_transf_df()    
     dataset.df_to_csv()
     dataset.to_csv()
