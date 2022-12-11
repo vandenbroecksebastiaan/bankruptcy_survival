@@ -1,3 +1,0 @@
-- Regression on the subdistribution hazards
-
-    Cumulative incidence function = subdistribution function
