@@ -87,7 +87,7 @@ class BankruptcyDataset:
         # self.transf_df = self.transf_df[self.transf_df["status"].isin(
         #     ["Liquidation", "Bankruptcy", "Merger by absorption"]
         # )]
-    
+
         self.__add_leverage_variables()
         self.__add_liquidity_variables()
         self.__add_profitability_variables()
@@ -259,7 +259,6 @@ class BankruptcyDataset:
             "Foreign company with a permanent office in Belgium"
         ]
         categories =  [private_list, public_list, cooperative_list,
-    
                        nonprofit_list, other_list]
         labels = ["private", "public", "cooperative", "nonprofit", "other"]
     
