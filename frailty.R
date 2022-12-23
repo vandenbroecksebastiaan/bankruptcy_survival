@@ -99,27 +99,48 @@ boxplot(data$total_liabilities_by_net_assets)
 boxplot(data$transf_total_liabilities_by_net_assets)
 
 # cash_by_total_assets
+jpeg(file = "visualizations/cash_by_total_assets.jpeg",
+     width = 3000, height = 3000, res = 300)
 par(mfrow=c(2, 2))
-hist(data$cash_by_total_assets, breaks=50)
-hist(data$log_cash_by_total_assets, breaks=50)
-boxplot(data$cash_by_total_assets)
-boxplot(data$log_cash_by_total_assets)
+hist(data$cash_by_total_assets, breaks=50,
+     main="cash_by_total_assets")
+hist(data$log_cash_by_total_assets, breaks=50,
+     main="truncated log(cash_by_total_assets)")
+boxplot(data$cash_by_total_assets,
+     main="cash_by_total_assets")
+boxplot(data$log_cash_by_total_assets,
+     main="truncated log(cash_by_total_assets)")
+dev.off()
 
 # cash_by_current_liabilities
+jpeg(file = "visualizations/cash_by_current_liabilities.jpeg",
+     width = 3000, height = 3000, res = 300)
 par(mfrow=c(2, 2))
 par(mar=c(2, 2, 2, 2))
-hist(data$cash_by_current_liabilities, breaks=50)
-hist(data$log_cash_by_current_liabilities, breaks=50)
-boxplot(data$cash_by_current_liabilities)
-boxplot(data$log_cash_by_current_liabilities)
+hist(data$cash_by_current_liabilities, breaks=50,
+     main="cash_by_current_liabilities")
+hist(data$log_cash_by_current_liabilities, breaks=50,
+     main="truncated log(cash_by_current_liabilities)")
+boxplot(data$cash_by_current_liabilities,
+     main="cash_by_current_liabilities")
+boxplot(data$log_cash_by_current_liabilities,
+     main="truncated log(cash_by_current_liabilities)")
+dev.off()
 
 # current_assets_by_current_liabilities
+jpeg(file = "visualizations/current_assets_by_current_liabilities.jpeg",
+     width = 3000, height = 3000, res = 300)
 par(mfrow=c(2, 2))
-par(mar=c(2, 2, 2, 2))
-hist(data$current_assets_by_current_liabilities, breaks=50)
-hist(data$log_current_assets_by_current_liabilities, breaks=50)
-boxplot(data$current_assets_by_current_liabilities)
-boxplot(data$log_current_assets_by_current_liabilities)
+par(mar=c(3, 3, 3, 3))
+hist(data$current_assets_by_current_liabilities, breaks=50,
+     main="current_assets_by_current_liabilities")
+hist(data$log_current_assets_by_current_liabilities, breaks=50,
+     main="log(current_assets_by_current_liabilities)")
+boxplot(data$current_assets_by_current_liabilities,
+        main="current_assets_by_current_liabilities")
+boxplot(data$log_current_assets_by_current_liabilities,
+        main="log(current_assets_by_current_liabilities)")
+dev.off()
 
 # tax
 par(mfrow=c(2, 2))
@@ -1091,6 +1112,7 @@ fit <- emfrail(Surv(years_to_event, censor) ~
                  data = data)
 fit.AIC <- 2 * 16 - 2 * fit$loglik[2]
 AIC_df <- rbind(AIC_df, list("EBIT", fit.AIC))
+names(AIC_df) <- c("Variable", "AIC")
 
 fit <- emfrail(Surv(years_to_event, censor) ~
                    log_current_assets_by_current_liabilities
@@ -1110,11 +1132,11 @@ fit.AIC <- 2 * 16 - 2 * fit$loglik[2]
 AIC_df <- rbind(AIC_df, list("working_capital_by_total_assets", fit.AIC))
 
 AIC_df
+#                          Variable AIC
+# 1                            EBIT 51176.18
+# 2 working_capital_by_total_assets 51175.21
 
-
-
-
-# Iteration 11
+# --- The model
 fit <- emfrail(Surv(years_to_event, censor) ~
                    log_current_assets_by_current_liabilities
                    + cooperative + nonprofit + other + private
@@ -1126,51 +1148,188 @@ fit <- emfrail(Surv(years_to_event, censor) ~
                    + EBITDA
                    + income_tax_by_total_assets
                    + transf_total_liabilities_by_net_assets
-                   + EBIT
                    + cluster(sector),
                  data = data)
-fit.AIC <- 2 * 14 - 2 * fit$loglik[2]
-AIC_df <- rbind(AIC_df, list("EBIT", fit.AIC))
+fit
+# Call: 
+#   emfrail(formula = Surv(years_to_event, censor) ~ log_current_assets_by_current_liabilities + 
+#             cooperative + nonprofit + other + private + log_cash_by_current_liabilities + 
+#             size_small + size_large + size_v_large + log_cash_by_total_assets + 
+#             tax + financial_expenses_by_total_assets + EBITDA + income_tax_by_total_assets + 
+#             transf_total_liabilities_by_net_assets + cluster(sector), 
+#           data = data)
+# 
+# log-likelihood: -25572.36 
+# frailty variance: 0.1754221 
+# theta: 5.700538 
+# 
+# coef        exp(coef)         se(coef)
+# log_current_assets_by_current_liabilities  -0.098753582673   0.905965926222   0.033200347669
+# cooperative                                 0.627237938436   1.872431658792   0.147138494327
+# nonprofit                                  -0.444146312150   0.641371573508   0.583808498311
+# other                                       0.514382870255   1.672605968332   0.648626957536
+# private                                     1.203042779324   3.330234691125   0.066084370773
+# log_cash_by_current_liabilities            -0.438716455892   0.644863600984   0.035686602567
+# size_small                                  0.307433293454   1.359930089238   0.057538438457
+# size_large                                 -0.358481657903   0.698736442012   0.156767973970
+# size_v_large                               -0.355997095328   0.700474654881   0.511512792811
+# log_cash_by_total_assets                    0.285151309063   1.329963248391   0.033331460170
+# tax                                        -0.000004656999   0.999995343012   0.000000621245
+# financial_expenses_by_total_assets         -0.850995990613   0.426989442616   0.293163009317
+# EBITDA                                      0.000000062326   1.000000062326   0.000000028030
+# income_tax_by_total_assets                  0.627564376753   1.873042992007   0.210396635122
+# transf_total_liabilities_by_net_assets     -0.000000955367   0.999999044634   0.000000665747
+# adj. se                z      p
+# log_current_assets_by_current_liabilities   0.033200972551  -2.974418370510 0.0029
+# cooperative                                 0.147141635420   4.262817499916 0.0000
+# nonprofit                                   0.583824415154  -0.760753234399 0.4468
+# other                                       0.648666064672   0.792985633547 0.4278
+# private                                     0.066084419622  18.204635619136 0.0000
+# log_cash_by_current_liabilities             0.035690848857 -12.292127252249 0.0000
+# size_small                                  0.057539156678   5.343027447801 0.0000
+# size_large                                  0.156768021048  -2.286701429961 0.0222
+# size_v_large                                0.511512999052  -0.695968814064 0.4864
+# log_cash_by_total_assets                    0.033337006416   8.553596729935 0.0000
+# tax                                         0.000000621342  -7.495064926235 0.0000
+# financial_expenses_by_total_assets          0.293176993926  -2.902669746408 0.0037
+# EBITDA                                      0.000000028030   2.223570351752 0.0262
+# income_tax_by_total_assets                  0.210503910302   2.981248072074 0.0029
+# transf_total_liabilities_by_net_assets      0.000000665757  -1.435008798780 0.1513
+# 
+# Score test for heterogeneity: p-val 0.000000000000000000000000000000000000000000337
 
-fit <- emfrail(Surv(years_to_event, censor) ~
-                   log_current_assets_by_current_liabilities
-                   + cooperative + nonprofit + other + private
-                   + log_cash_by_current_liabilities
-                   + size_small + size_large + size_v_large
-                   + log_cash_by_total_assets
-                   + tax
-                   + financial_expenses_by_total_assets
-                   + EBITDA
-                   + income_tax_by_total_assets
-                   + transf_total_liabilities_by_net_assets
-                   + working_capital_by_total_assets
-                   + cluster(sector),
-                 data = data)
-fit.AIC <- 2 * 14 - 2 * fit$loglik[2]
-AIC_df <- rbind(AIC_df, list("working_capital_by_total_assets", fit.AIC))
-  
-AIC_df
+fit$frail
+# C - Manufacturing 
+# 0.7663449 
+# G - Wholesale and retail trade; repair of motor vehicles and motorcycles 
+# 0.8639690 
+# H - Transportation and storage 
+# 1.4532523 
+# J - Information and communication 
+# 1.2472926 
+# M - Professional, scientific and technical activities 
+# 0.7480826 
+# D - Electricity, gas, steam and air conditioning supply 
+# 1.1550865 
+# L - Real estate activities 
+# 0.6649859 
+# F - Construction 
+# 1.3723498 
+# N - Administrative and support service activities 
+# 1.2010806 
+# E - Water supply; sewerage, waste management and remediation activities 
+# 0.6526173 
+# Q - Human health and social work activities 
+# 0.6097234 
+# K - Financial and insurance activities 
+# 0.3032562 
+# I - Accommodation and food service activities 
+# 1.6981274 
+# R - Arts, entertainment and recreation 
+# 1.4354011 
+# P - Education 
+# 1.0394652 
+# O - Public administration and defence; compulsory social security 
+# 0.9381831 
+# S - Other service activities 
+# 0.9922108 
+# A - Agriculture, forestry and fishing 
+# 0.7613264
 
-# Histogram of the estimated frailties
-jpeg(file = "visualizations/temp1.jpeg", width = 2500, height = 2000, res = 300)
-autoplot(fit1, type="hist")
-dev.off()
+table(data$sector)
+# A - Agriculture, forestry and fishing 
+# 44 
+# C - Manufacturing 
+# 708 
+# D - Electricity, gas, steam and air conditioning supply 
+# 11 
+# E - Water supply; sewerage, waste management and remediation activities 
+# 23 
+# F - Construction 
+# 1382 
+# G - Wholesale and retail trade; repair of motor vehicles and motorcycles 
+# 2317 
+# H - Transportation and storage 
+# 501 
+# I - Accommodation and food service activities 
+# 899 
+# J - Information and communication 
+# 398 
+# K - Financial and insurance activities 
+# 517 
+# L - Real estate activities 
+# 202 
+# M - Professional, scientific and technical activities 
+# 1134 
+# N - Administrative and support service activities 
+# 550 
+# O - Public administration and defence; compulsory social security 
+# 3 
+# P - Education 
+# 35 
+# Q - Human health and social work activities 
+# 225 
+# R - Arts, entertainment and recreation 
+# 106 
+# S - Other service activities 
+# 200
 
-jpeg(file = "visualizations/temp2.jpeg", width = 2500, height = 2000, res = 300)
-autoplot(fit1, type="hr", lp=c(0, 1))
-dev.off()
+# --- Other things
+# Plot log cumulative hazard
+new_data <- data.frame(
+  log_current_assets_by_current_liabilities   = c(1,     1,     1,      1,      1      ),
+  cooperative                                 = c(0,     1,     0,      0,      1      ),     
+  nonprofit                                   = c(0,     0,     1,      0,      0      ),     
+  other                                       = c(0,     0,     0,      1,      0      ),     
+  private                                     = c(0,     0,     0,      0,      1      ),     
+  log_cash_by_current_liabilities             = c(-8,   -8,    -8,     -8,     -8      ),    
+  size_small                                  = c(0,     0,     0,      0,      0      ),     
+  size_large                                  = c(0,     0,     0,      0,      0      ),     
+  size_v_large                                = c(0,     0,     0,      0,      0      ),     
+  log_cash_by_total_assets                    = c(-10,  -10,   -10,    -10,    -10     ),   
+  tax                                         = c(10000, 10000, 10000,  10000,  10000  ), 
+  financial_expenses_by_total_assets          = c(0.1,   0.1,   0.1,    0.1,    0.1    ),   
+  EBITDA                                      = c(0,     0,     0,      0,      0      ),     
+  income_tax_by_total_assets                  = c(0,     0,     0,      0,      0      ),     
+  transf_total_liabilities_by_net_assets      = c(0,     0,     0,      0,      0      )       
+)
 
-jpeg(file = "visualizations/temp3.jpeg", width = 2500, height = 2000, res = 300)
-autoplot(fit1, type="pred", lp=c(0))
-dev.off()
+cum_haz <- predict(fit, type="conditional", quantity="cumhaz",
+                   newdata=new_data)
 
-# Predict baseline
-# predict(fit1, lp=c(0))
+plot(log(cum_haz[[1]]$cumhaz), col=1, type="S", ylim=c(-10, 1))
+for (i in 2:length(cum_haz)) {
+  lines(log(cum_haz[[i]]$cumhaz), col=i, type="S")
+}
 
 
-# fit2 <- fitfrail(Surv(years_to_event, censor) ~
-#                      current_assets_by_current_liabilities
-#                      + cluster(size_classification),
-#                 dat = data,
-#                 frailty = "gamma")
-# fit2
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
