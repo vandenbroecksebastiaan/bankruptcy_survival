@@ -1,6 +1,5 @@
 library(dplyr)
 library(survival)
-library(parfm)
 library(frailtySurv)
 library(frailtyEM)
 library(ggstatsplot)
@@ -8,7 +7,7 @@ options(scipen = 999)
 rm(list=ls())
 
 # --- Read data
-data <- read.csv("data/bankruptcy_transformed.csv")
+data <- read.csv("data/bankruptcy_transformed_alive_and_fail.csv")
 
 # The last row can be empty
 data <- na.omit(data)
@@ -25,19 +24,19 @@ data$size_v_large <- ifelse(data$size_classification == "Very large", 1, 0)
 data$EBITDA <- data$EBTIDA
 data$EBTIDA <- NULL
 
+# There is a row without a cluster
+data <- data[data$sector!="",]
+
 # --- Transform variables / remove outliers
 
 # total_liabilities_by_net_assets
-# outliers are to be truncated
-var_mean <- mean(data$total_liabilities_by_net_assets)
-var_std <- sqrt(var(data$total_liabilities_by_net_assets))
-var_stand <- (data$total_liabilities_by_net_assets - var_mean) / var_std
-
-var_stand[var_stand > 0.5] <- 0.5
-var_stand[var_stand < -0.5] <- -0.5
-
-data$transf_total_liabilities_by_net_assets <- (
-  var_stand * var_std + var_mean
+data$log_total_liabilities_by_net_assets <- log(data$total_liabilities_by_net_assets)
+min <- min(
+  data$log_total_liabilities_by_net_assets[is.finite(data$log_total_liabilities_by_net_assets)]
+)
+data$log_total_liabilities_by_net_assets <- replace(
+  data$log_total_liabilities_by_net_assets, data$log_total_liabilities_by_net_assets == -Inf,
+  min
 )
 
 # cash_by_total_assets
@@ -62,24 +61,73 @@ data$log_cash_by_current_liabilities <- replace(
 
 # current_assets_by_current_liabilities
 data$log_current_assets_by_current_liabilities <- log(data$current_assets_by_current_liabilities)
+min <- min(
+  data$log_current_assets_by_current_liabilities[is.finite(data$log_current_assets_by_current_liabilities)]
+)
+data$log_cash_by_current_liabilities <- replace(
+  data$log_current_assets_by_current_liabilities, data$log_current_assets_by_current_liabilities == -Inf,
+  min
+)
 
 # tax
-# some of the outliers are very large, but still plausible for large firms
+data$log_tax <- log(data$tax)
+min <- min(
+  data$log_tax[is.finite(data$log_tax)]
+)
+data$log_cash_by_current_liabilities <- replace(
+  data$log_tax, data$log_tax == -Inf,
+  min
+)
 
 # financial_expenses_by_total_assets
-# there outliers, but we will not treat them
+data$log_financial_expenses_by_total_assets <- log(data$financial_expenses_by_total_assets)
+min <- min(
+  data$log_financial_expenses_by_total_assets[is.finite(data$log_financial_expenses_by_total_assets)]
+)
+data$log_financial_expenses_by_total_assets <- replace(
+  data$log_financial_expenses_by_total_assets, data$log_financial_expenses_by_total_assets == -Inf,
+  min
+)
 
 # EBIT
-# some of the outliers are very large, but still plausible for large firms
+data$log_EBIT <- log(data$EBIT)
+min <- min(
+  data$log_EBIT[is.finite(data$log_EBIT)]
+)
+data$log_EBIT <- replace(
+  data$log_EBIT, data$log_EBIT == -Inf,
+  min
+)
 
 # working_capital_by_total_assets
-# some of the outliers are very small, but still plausible
+data$log_working_capital_by_total_assets <- log(data$working_capital_by_total_assets)
+min <- min(
+  data$log_working_capital_by_total_assets[is.finite(data$log_working_capital_by_total_assets)]
+)
+data$log_working_capital_by_total_assets <- replace(
+  data$log_working_capital_by_total_assets, data$log_working_capital_by_total_assets == -Inf,
+  min
+)
 
 # income_tax_by_total_assets
-# plausible outliers
+data$log_income_tax_by_total_assets <- log(data$income_tax_by_total_assets)
+min <- min(
+  data$log_income_tax_by_total_assets[is.finite(data$log_income_tax_by_total_assets)]
+)
+data$log_income_tax_by_total_assets <- replace(
+  data$log_income_tax_by_total_assets, data$log_income_tax_by_total_assets == -Inf,
+  min
+)
 
 # EBITDA
-# plausible outliers
+data$log_EBITDA <- log(data$EBITDA)
+min <- min(
+  data$log_EBITDA[is.finite(data$log_EBITDA)]
+)
+data$log_EBITDA <- replace(
+  data$log_EBITDA, data$log_EBITDA == -Inf,
+  min
+)
 
 # Don't forget to report that we did this:
 # 3 observations are removed
@@ -92,11 +140,18 @@ data <- data %>%
 
 # --- Make visualizations of the continuous variables
 # total_liabilities_by_net_assets
+jpeg(file = "visualizations/total_liabilities_by_total_asssets.jpeg",
+     width = 3000, height = 3000, res = 300)
 par(mfrow=c(2, 2))
-hist(data$total_liabilities_by_net_assets, breaks=50)
-hist(data$transf_total_liabilities_by_net_assets, breaks=50)
-boxplot(data$total_liabilities_by_net_assets)
-boxplot(data$transf_total_liabilities_by_net_assets)
+hist(data$total_liabilities_by_net_assets, breaks=50,
+     main="total_liabilities_by_total_assets")
+hist(data$log_total_liabilities_by_net_assets, breaks=50,
+     main="log(total_liabilities_by_total_assets)")
+boxplot(data$total_liabilities_by_net_assets,
+     main="total_liabilities_by_total_assets")
+boxplot(data$log_total_liabilities_by_net_assets,
+     main="log(total_liabilities_by_total_assets)")
+dev.off()
 
 # cash_by_total_assets
 jpeg(file = "visualizations/cash_by_total_assets.jpeg",
@@ -105,11 +160,11 @@ par(mfrow=c(2, 2))
 hist(data$cash_by_total_assets, breaks=50,
      main="cash_by_total_assets")
 hist(data$log_cash_by_total_assets, breaks=50,
-     main="truncated log(cash_by_total_assets)")
+     main="log(cash_by_total_assets)")
 boxplot(data$cash_by_total_assets,
      main="cash_by_total_assets")
 boxplot(data$log_cash_by_total_assets,
-     main="truncated log(cash_by_total_assets)")
+     main="log(cash_by_total_assets)")
 dev.off()
 
 # cash_by_current_liabilities
@@ -120,11 +175,11 @@ par(mar=c(2, 2, 2, 2))
 hist(data$cash_by_current_liabilities, breaks=50,
      main="cash_by_current_liabilities")
 hist(data$log_cash_by_current_liabilities, breaks=50,
-     main="truncated log(cash_by_current_liabilities)")
+     main="log(cash_by_current_liabilities)")
 boxplot(data$cash_by_current_liabilities,
      main="cash_by_current_liabilities")
 boxplot(data$log_cash_by_current_liabilities,
-     main="truncated log(cash_by_current_liabilities)")
+     main="log(cash_by_current_liabilities)")
 dev.off()
 
 # current_assets_by_current_liabilities
@@ -143,40 +198,94 @@ boxplot(data$log_current_assets_by_current_liabilities,
 dev.off()
 
 # tax
+jpeg(file = "visualizations/tax.jpeg",
+     width = 3000, height = 3000, res = 300)
 par(mfrow=c(2, 2))
-par(mar=c(2, 2, 2, 2))
-hist(data$tax, breaks=50)
-boxplot(data$tax)
+par(mar=c(3, 3, 3, 3))
+hist(data$tax, breaks=50,
+     main="tax")
+hist(data$log_tax, breaks=50,
+     main="log(tax)")
+boxplot(data$tax,
+        main="tax")
+boxplot(data$log_tax,
+        main="log(tax)")
+dev.off()
 
 # financial_expenses_by_total_assets
+jpeg(file = "visualizations/financial_expenses_by_total_assets.jpeg",
+     width = 3000, height = 3000, res = 300)
 par(mfrow=c(2, 2))
-par(mar=c(2, 2, 2, 2))
-hist(data$financial_expenses_by_total_assets, breaks=50)
-boxplot(data$financial_expenses_by_total_assets)
+par(mar=c(3, 3, 3, 3))
+hist(data$financial_expenses_by_total_assets, breaks=50,
+     main="financial_expenses_by_total_assets")
+hist(data$log_financial_expenses_by_total_assets, breaks=50,
+     main="log(financial_expenses_by_total_assets)")
+boxplot(data$financial_expenses_by_total_assets,
+        main="financial_expenses_by_total_assets")
+boxplot(data$log_financial_expenses_by_total_assets,
+        main="log(log_financial_expenses_by_total_assets)")
+dev.off()
 
 # EBIT
+jpeg(file = "visualizations/financial_expenses_by_total_assets.jpeg",
+     width = 3000, height = 3000, res = 300)
 par(mfrow=c(2, 2))
-par(mar=c(2, 2, 2, 2))
-hist(data$EBIT, breaks=50)
-boxplot(data$EBIT)
+par(mar=c(3, 3, 3, 3))
+hist(data$EBIT, breaks=50,
+     main="EBIT")
+hist(data$log_EBIT, breaks=50,
+     main="log(EBIT)")
+boxplot(data$EBIT,
+        main="EBIT")
+boxplot(data$log_EBIT,
+        main="log(EBIT)")
+dev.off()
 
 # working_capital_by_total_assets
+jpeg(file = "visualizations/working_capital_by_total_assets.jpeg",
+     width = 3000, height = 3000, res = 300)
 par(mfrow=c(2, 2))
-par(mar=c(2, 2, 2, 2))
-hist(data$working_capital_by_total_assets, breaks=50)
-boxplot(data$working_capital_by_total_assets)
+par(mar=c(3, 3, 3, 3))
+hist(data$working_capital_by_total_assets, breaks=50,
+     main="working_capital_by_total_assets")
+hist(data$log_working_capital_by_total_assets, breaks=50,
+     main="log(working_capital_by_total_assets)")
+boxplot(data$working_capital_by_total_assets,
+        main="working_capital_by_total_assets")
+boxplot(data$log_working_capital_by_total_assets,
+        main="log(working_capital_by_total_assets)")
+dev.off()
 
 # income_tax_by_total_assets
+jpeg(file = "visualizations/working_capital_by_total_assets.jpeg",
+     width = 3000, height = 3000, res = 300)
 par(mfrow=c(2, 2))
-par(mar=c(2, 2, 2, 2))
-hist(data$income_tax_by_total_assets, breaks=50)
-boxplot(data$income_tax_by_total_assets)
+par(mar=c(3, 3, 3, 3))
+hist(data$income_tax_by_total_assets, breaks=50,
+     main="income_tax_by_total_assets")
+hist(data$log_income_tax_by_total_assets, breaks=50,
+     main="log(income_tax_by_total_assets)")
+boxplot(data$income_tax_by_total_assets,
+        main="income_tax_by_total_assets")
+boxplot(data$log_income_tax_by_total_assets,
+        main="log(income_tax_by_total_assets)")
+dev.off()
 
 # EBITDA
+jpeg(file = "visualizations/EBITDA.jpeg",
+     width = 3000, height = 3000, res = 300)
 par(mfrow=c(2, 2))
-par(mar=c(2, 2, 2, 2))
-hist(data$EBITDA, breaks=50)
-boxplot(data$EBITDA)
+par(mar=c(3, 3, 3, 3))
+hist(data$EBITDA, breaks=50,
+     main="EBITDA")
+hist(data$log_EBITDA, breaks=50,
+     main="log(EBITDA)")
+boxplot(data$EBITDA,
+        main="EBITDA")
+boxplot(data$log_EBITDA,
+        main="log(EBITDA)")
+dev.off()
 
 # --- Stepwise variable selection using AIC
 # Iteration 1
@@ -186,87 +295,87 @@ fit <- emfrail(Surv(years_to_event, censor) ~
                    + cluster(sector),
                  data = data)
 fit.AIC <- 2 * 1 - 2 * fit$loglik[2]
-AIC_df <- rbind(AIC_df, list("transf_total_liabilities_by_net_assets", fit.AIC))
-names(AIC_df) <- c("Variable", "AIC")
+AIC_df <- rbind(AIC_df, list("transf_total_liabilities_by_net_assets", "Iteration 1", fit.AIC))
+names(AIC_df) <- c("Variable", "iteration", "AIC")
 
 fit <- emfrail(Surv(years_to_event, censor) ~
                    log_cash_by_total_assets
                    + cluster(sector),
                  data = data)
 fit.AIC <- 2 * 1 - 2 * fit$loglik[2]
-AIC_df <- rbind(AIC_df, list("log_cash_by_total_assets", fit.AIC))
+AIC_df <- rbind(AIC_df, list("log_cash_by_total_assets", "Iteration 1", fit.AIC))
 
 fit <- emfrail(Surv(years_to_event, censor) ~
                    log_cash_by_current_liabilities
                    + cluster(sector),
                  data = data)
 fit.AIC <- 2 * 1 - 2 * fit$loglik[2]
-AIC_df <- rbind(AIC_df, list("log_cash_by_current_liabilities", fit.AIC))
+AIC_df <- rbind(AIC_df, list("log_cash_by_current_liabilities", "Iteration 1", fit.AIC))
 
 fit <- emfrail(Surv(years_to_event, censor) ~
                    log_current_assets_by_current_liabilities
                    + cluster(sector),
                  data = data)
 fit.AIC <- 2 * 1 - 2 * fit$loglik[2]
-AIC_df <- rbind(AIC_df, list("log_current_assets_by_current_liabilities", fit.AIC))
+AIC_df <- rbind(AIC_df, list("log_current_assets_by_current_liabilities", "Iteration 1", fit.AIC))
 
 fit <- emfrail(Surv(years_to_event, censor) ~
                    tax
                    + cluster(sector),
                  data = data)
 fit.AIC <- 2 * 1 - 2 * fit$loglik[2]
-AIC_df <- rbind(AIC_df, list("tax", fit.AIC))
+AIC_df <- rbind(AIC_df, list("tax", "Iteration 1", fit.AIC))
 
 fit <- emfrail(Surv(years_to_event, censor) ~
                    financial_expenses_by_total_assets
                    + cluster(sector),
                  data = data)
 fit.AIC <- 2 * 1 - 2 * fit$loglik[2]
-AIC_df <- rbind(AIC_df, list("financial_expenses_by_total_assets", fit.AIC))
+AIC_df <- rbind(AIC_df, list("financial_expenses_by_total_assets", "Iteration 1", fit.AIC))
 
 fit <- emfrail(Surv(years_to_event, censor) ~
                    EBIT
                    + cluster(sector),
                  data = data)
 fit.AIC <- 2 * 1 - 2 * fit$loglik[2]
-AIC_df <- rbind(AIC_df, list("EBIT", fit.AIC))
+AIC_df <- rbind(AIC_df, list("EBIT", "Iteration 1", fit.AIC))
 
 fit <- emfrail(Surv(years_to_event, censor) ~
                    working_capital_by_total_assets
                    + cluster(sector),
                  data = data)
 fit.AIC <- 2 * 1 - 2 * fit$loglik[2]
-AIC_df <- rbind(AIC_df, list("working_capital_by_total_assets", fit.AIC))
+AIC_df <- rbind(AIC_df, list("working_capital_by_total_assets", "Iteration 1", fit.AIC))
 
 fit <- emfrail(Surv(years_to_event, censor) ~
                    income_tax_by_total_assets
                    + cluster(sector),
                  data = data)
 fit.AIC <- 2 * 1 - 2 * fit$loglik[2]
-AIC_df <- rbind(AIC_df, list("income_tax_by_total_assets", fit.AIC))
+AIC_df <- rbind(AIC_df, list("income_tax_by_total_assets", "Iteration 1", fit.AIC))
 
 fit <- emfrail(Surv(years_to_event, censor) ~
                    cooperative + nonprofit + other + private
                    + cluster(sector),
                  data = data)
 fit.AIC <- 2 * 4 - 2 * fit$loglik[2]
-AIC_df <- rbind(AIC_df, list("type_dummies", fit.AIC))
+AIC_df <- rbind(AIC_df, list("type_dummies", "Iteration 1", fit.AIC))
 
 fit <- emfrail(Surv(years_to_event, censor) ~
                    EBITDA
                    + cluster(sector),
                  data = data)
 fit.AIC <- 2 * 1 - 2 * fit$loglik[2]
-AIC_df <- rbind(AIC_df, list("EBITDA", fit.AIC))
+AIC_df <- rbind(AIC_df, list("EBITDA", "Iteration 1", fit.AIC))
 
 fit <- emfrail(Surv(years_to_event, censor) ~
                    size_small + size_large + size_v_large
                    + cluster(sector),
                  data = data)
 fit.AIC <- 2 * 3 - 2 * fit$loglik[2]
-AIC_df <- rbind(AIC_df, list("size_dummmies", fit.AIC))
+AIC_df <- rbind(AIC_df, list("size_dummmies", "Iteration 1", fit.AIC))
 
-AIC_df
+AIC_df[AIC_df$iteration=="Iteration 1"]
 #                                     Variable AIC
 # 1     transf_total_liabilities_by_net_assets 53272.44
 # 2                   log_cash_by_total_assets 52969.39
@@ -1275,58 +1384,42 @@ table(data$sector)
 # 200
 
 # --- Other things
-# Install an older version of frailtysurv
-packageurl <- "https://cran.r-project.org/src/contrib/Archive/frailtySurv/frailtySurv_1.3.5.tar.gz"
-install.packages(packageurl, repos=NULL, type="source")
 
-fitfrail(Surv(years_to_event, censor) ~
-           log_current_assets_by_current_liabilities
-           + cooperative + nonprofit + other + private
-           + log_cash_by_current_liabilities
-           + size_small + size_large + size_v_large
-           + log_cash_by_total_assets
-           + tax
-           + financial_expenses_by_total_assets
-           + EBITDA
-           + income_tax_by_total_assets
-           + transf_total_liabilities_by_net_assets
-           + cluster(sector),
-         data, frailty="gamma", fitmethod="loglik")
+fit <- emfrail(Surv(years_to_event, censor) ~
+                   log_current_assets_by_current_liabilities
+                   + cooperative + nonprofit + other + private
+                   + log_cash_by_current_liabilities
+                   + size_small + size_large + size_v_large
+                   + log_cash_by_total_assets
+                   + tax
+                   + financial_expenses_by_total_assets
+                   + EBITDA
+                   + income_tax_by_total_assets
+                   + transf_total_liabilities_by_net_assets
+                   + cluster(sector),
+                 data = data)
 
 # Are the results much more different when using the penalized partial
 # likelihood instead of the marginal likelihood?
-fit.marginal <- coxph(Surv(years_to_event, censor) ~
-                          log_current_assets_by_current_liabilities
-                          + cooperative + nonprofit + other + private
-                          + log_cash_by_current_liabilities
-                          + size_small + size_large + size_v_large
-                          + log_cash_by_total_assets
-                          + tax
-                          + financial_expenses_by_total_assets
-                          + EBITDA
-                          + income_tax_by_total_assets
-                          + transf_total_liabilities_by_net_assets
-                          + cluster(sector),
-                        data = data)
-fit.marginal
 
 # Plot log cumulative hazard
+# Public and varying size dummies
 new_data <- data.frame(
-  log_current_assets_by_current_liabilities   = c(1,     1,     1,      1,      1      ),
-  cooperative                                 = c(0,     1,     0,      0,      1      ),     
-  nonprofit                                   = c(0,     0,     1,      0,      0      ),     
-  other                                       = c(0,     0,     0,      1,      0      ),     
-  private                                     = c(0,     0,     0,      0,      1      ),     
-  log_cash_by_current_liabilities             = c(-8,   -8,    -8,     -8,     -8      ),    
-  size_small                                  = c(0,     0,     0,      0,      0      ),     
-  size_large                                  = c(0,     0,     0,      0,      0      ),     
-  size_v_large                                = c(0,     0,     0,      0,      0      ),     
-  log_cash_by_total_assets                    = c(-10,  -10,   -10,    -10,    -10     ),   
-  tax                                         = c(10000, 10000, 10000,  10000,  10000  ), 
-  financial_expenses_by_total_assets          = c(0.1,   0.1,   0.1,    0.1,    0.1    ),   
-  EBITDA                                      = c(0,     0,     0,      0,      0      ),     
-  income_tax_by_total_assets                  = c(0,     0,     0,      0,      0      ),     
-  transf_total_liabilities_by_net_assets      = c(0,     0,     0,      0,      0      )       
+  log_current_assets_by_current_liabilities   = c(1,     1,     1,      1,     1,     1,     1,      1,     1,     1,     1,      1,     1,     1,     1,      1,      1,     1,     1,      1      ),
+  cooperative                                 = c(0,     0,     0,      0,     1,     1,     1,      1,     0,     0,     0,      0,     0,     0,     0,      0,      0,     0,     0,      0      ),     
+  nonprofit                                   = c(0,     0,     0,      0,     0,     0,     0,      0,     1,     1,     1,      1,     0,     0,     0,      0,      0,     0,     0,      0      ),     
+  other                                       = c(0,     0,     0,      0,     0,     0,     0,      0,     0,     0,     0,      0,     1,     1,     1,      1,      0,     0,     0,      0      ),     
+  private                                     = c(0,     0,     0,      0,     0,     0,     0,      0,     0,     0,     0,      0,     0,     0,     0,      0,      1,     1,     1,      1      ),     
+  log_cash_by_current_liabilities             = c(-8,   -8,    -8,     -8,     -8,   -8,    -8,     -8,     -8,   -8,    -8,     -8,     -8,   -8,    -8,     -8,      -8,   -8,    -8,     -8      ),    
+  size_small                                  = c(1,     0,     0,      0,     1,     0,     0,      0,     1,     0,     0,      0,     1,     0,     0,      0,      1,     0,     0,      0      ),     
+  size_large                                  = c(0,     0,     1,      0,     0,     0,     1,      0,     0,     0,     1,      0,     0,     0,     1,      0,      0,     0,     1,      0      ),     
+  size_v_large                                = c(0,     0,     0,      1,     0,     0,     0,      1,     0,     0,     0,      1,     0,     0,     0,      1,      0,     0,     0,      1      ),     
+  log_cash_by_total_assets                    = c(-10,  -10,   -10,    -10,    -10,  -10,   -10,    -10,    -10,  -10,   -10,    -10,    -10,  -10,   -10,    -10,     -10,  -10,   -10,    -10     ),   
+  tax                                         = c(10000, 10000, 10000,  10000, 10000, 10000, 10000,  10000, 10000, 10000, 10000,  10000, 10000, 10000, 10000,  10000,  10000, 10000, 10000,  10000  ), 
+  financial_expenses_by_total_assets          = c(0.1,   0.1,   0.1,    0.1,   0.1,   0.1,   0.1,    0.1,   0.1,   0.1,   0.1,    0.1,   0.1,   0.1,   0.1,    0.1,    0.1,   0.1,   0.1,    0.1    ),   
+  EBITDA                                      = c(0,     0,     0,      0,     0,     0,     0,      0,     0,     0,     0,      0,     0,     0,     0,      0,      0,     0,     0,      0      ),     
+  income_tax_by_total_assets                  = c(0,     0,     0,      0,     0,     0,     0,      0,     0,     0,     0,      0,     0,     0,     0,      0,      0,     0,     0,      0      ),     
+  transf_total_liabilities_by_net_assets      = c(0,     0,     0,      0,     0,     0,     0,      0,     0,     0,     0,      0,     0,     0,     0,      0,      0,     0,     0,      0      )       
 )
 
 cum_haz <- predict(fit, type="conditional", quantity="cumhaz",
