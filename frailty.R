@@ -1275,6 +1275,41 @@ table(data$sector)
 # 200
 
 # --- Other things
+# Install an older version of frailtysurv
+packageurl <- "https://cran.r-project.org/src/contrib/Archive/frailtySurv/frailtySurv_1.3.5.tar.gz"
+install.packages(packageurl, repos=NULL, type="source")
+
+fitfrail(Surv(years_to_event, censor) ~
+           log_current_assets_by_current_liabilities
+           + cooperative + nonprofit + other + private
+           + log_cash_by_current_liabilities
+           + size_small + size_large + size_v_large
+           + log_cash_by_total_assets
+           + tax
+           + financial_expenses_by_total_assets
+           + EBITDA
+           + income_tax_by_total_assets
+           + transf_total_liabilities_by_net_assets
+           + cluster(sector),
+         data, frailty="gamma", fitmethod="loglik")
+
+# Are the results much more different when using the penalized partial
+# likelihood instead of the marginal likelihood?
+fit.marginal <- coxph(Surv(years_to_event, censor) ~
+                          log_current_assets_by_current_liabilities
+                          + cooperative + nonprofit + other + private
+                          + log_cash_by_current_liabilities
+                          + size_small + size_large + size_v_large
+                          + log_cash_by_total_assets
+                          + tax
+                          + financial_expenses_by_total_assets
+                          + EBITDA
+                          + income_tax_by_total_assets
+                          + transf_total_liabilities_by_net_assets
+                          + cluster(sector),
+                        data = data)
+fit.marginal
+
 # Plot log cumulative hazard
 new_data <- data.frame(
   log_current_assets_by_current_liabilities   = c(1,     1,     1,      1,      1      ),

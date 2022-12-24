@@ -1,47 +1,11 @@
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
-
-# TODO: check for age and log(age)
-
-# Gupta (2018):
-# (1) Leverage
-#     Total liabilities / tangible total assets
-#     Total liablities / net worth (= net current assets)
-# (2) Liquidity
-#     Cash and short-term investment / total assets
-#         (investements excluded because too restrictive)
-#     Cash and marketable securities / current liabilities
-#         (securities excluded because too restrictive)
-#     Current assets / current liabilities
-#     Quick ratio
-#         (Quick ratio not available)
-# (3) Profitability
-#     Earnings before interest
-#     Tax
-#     EBITDA
-#     ROE
-#         (replaced by return on total assets)
-#     Operating profit / capital employed
-#         (not included)
-# (4) Financing
-#     Financial expenses / total assets
-#     Financial expenses / sales
-#         (sales not included)
-#     Earnings before interest taxes
-# (5) Activity
-#     Working capital / sales
-#         (sales not included)
-#     Working capital / total assets
-# (6) Growth
-#     Different size categories
-# (7) Other
-#     Income tax / total assets
 
 
 class BankruptcyDataset:
-    def __init__(self, path):
+    def __init__(self, path, event_type):
         self.df = self.__read_df(path)
+        self.event_type = event_type
 
 
     def __read_df(self, path):
@@ -56,23 +20,6 @@ class BankruptcyDataset:
         for i in net_assets_cols: df[i] = df[i].str.replace(",", ".")
         df[net_assets_cols] = df[net_assets_cols].astype(float)
         return df
-    
-    
-    def plot_event_times(self):
-        # Make a hist of relative event times
-        event_dict = {}
-        for i in self.transf_df["status"].unique():
-            event_dict[i] = self.transf_df[self.transf_df["status"] == i]\
-                                          ["years_to_event"]
-
-        plt.figure(figsize=(5*len(event_dict.items()), 5))
-        for idx, (i, j) in enumerate(event_dict.items()):
-            plt.subplot(1, len(event_dict.keys()), idx+1)
-            plt.hist(j)
-            plt.title(i)
-            
-        plt.savefig("visualizations/hist_event_times.png", dpi=300,
-                    bbox_inches="tight")
 
 
     def create_transf_df(self):
@@ -80,14 +27,12 @@ class BankruptcyDataset:
         for further analysis."""
         self.transf_df = pd.DataFrame(index=self.df.index.unique())
         self.transf_df.index = self.transf_df.index.rename("index")
-        self.__add_status()
+
+        if self.event_type == "fail":
+            self.__add_status_fail()
+        if self.event_type == "alive":
+            self.__add_status_alive()
         self.__add_status_indicator()
-
-        # Only keep companies with the following status
-        # self.transf_df = self.transf_df[self.transf_df["status"].isin(
-        #     ["Liquidation", "Bankruptcy", "Merger by absorption"]
-        # )]
-
         self.__add_leverage_variables()
         self.__add_liquidity_variables()
         self.__add_profitability_variables()
@@ -98,13 +43,11 @@ class BankruptcyDataset:
         self.__add_legal_form()
 
         # Drop columns with Inf, because of division by 0
-        print(self.transf_df.shape)
         self.transf_df = self.transf_df.replace([np.Inf, -np.Inf], np.nan)
         self.transf_df = self.transf_df.dropna(how="all")
-        print(self.transf_df.shape)
 
 
-    def __add_status(self):
+    def __add_status_fail(self):
         """Adds a status, for example bankruptcy, to the transformed dataframe.
         It also calculates a lower bound on the years to that status."""
         # Add status to new df
@@ -136,6 +79,25 @@ class BankruptcyDataset:
         ]
         self.transf_df["years_to_event"] = self.transf_df["years_to_event"]\
             .astype(int)
+
+
+    def __add_status_alive(self):
+        self.transf_df["status"] = "alive"
+
+        self.transf_df["start_date"] = self.df["Date of incorporation"]
+        self.transf_df["end_date"] = pd.to_datetime("2022-01-01")
+
+        self.transf_df["start_date"] = pd.to_datetime(
+            self.transf_df["start_date"], dayfirst=True,
+        )
+    
+        self.transf_df["years_to_event"] = [
+            len(pd.date_range(start=i, end=j, freq="Y"))
+            for i, j in zip(self.transf_df["start_date"],
+                            self.transf_df["end_date"])
+        ]
+        self.transf_df["years_to_event"] = self.transf_df["years_to_event"]\
+            .astype(int)
     
     
     def __add_status_indicator(self):
@@ -146,6 +108,8 @@ class BankruptcyDataset:
             i:j for i, j in
             zip(indicator_map, list(range(len(indicator_map))))
         }
+
+        indicator_map["alive"] = 99
     
         self.transf_df["event_indicator"] = [
             indicator_map[i] for i in self.transf_df["status"]
@@ -223,14 +187,16 @@ class BankruptcyDataset:
             "Private Founding",
             "Professional partnership in the form of a private company with "\
             "limited liability",
-            "Private company"
+            "Private company",
+            "Private company of another legal form"
         ]
         public_list = [
             "Company limited by shares",
             "Public company limited by shares",
             "Public company of another legal form",
             "Public utility Founding",
-            "Public institution"
+            "Public institution",
+            "Public company limited by shares with a social aim"
         ]
         cooperative_list = [
             "Co-operative society with limited liability",
@@ -239,7 +205,10 @@ class BankruptcyDataset:
             "Co-operative society with unlimited joint and several liability",
             "Co-operative society with limited liability by way of "\
             "participating interest",
-            "Public co-operative society"
+            "Public co-operative society",
+            "Private co-operative society",
+            "Private co-operative society with limited liability with a social aim",
+
         ]
         nonprofit_list = [
             "Non-profit association", "Private non-profit association",
@@ -256,7 +225,9 @@ class BankruptcyDataset:
             "European economic joint venture with Belgian office",
             "Public utility founding",
             "Economic joint venture",
-            "Foreign company with a permanent office in Belgium"
+            "Foreign company with a permanent office in Belgium",
+            "Agricultural partnership",
+            "Services providers Association"
         ]
         categories =  [private_list, public_list, cooperative_list,
                        nonprofit_list, other_list]
@@ -392,11 +363,14 @@ class BankruptcyDataset:
 
 
 def main():
-    dataset = BankruptcyDataset(path="data/Bel-first_Export_7.txt")
-    dataset.create_transf_df()    
-    dataset.plot_event_times()    
-    dataset.df_to_csv()
-    dataset.to_csv()
+    dataset_fail = BankruptcyDataset(path="data/Bel-first_Export_7.txt", event_type="fail")
+    dataset_fail.create_transf_df()    
+
+    dataset_alive = BankruptcyDataset(path="data/Bel-first_Export_8.txt", event_type="alive")
+    dataset_alive.create_transf_df()
+
+    pd.concat([dataset_fail.transf_df, dataset_alive.transf_df])\
+        .to_csv("data/bankruptcy_transformed_alive_and_fail.csv")
 
 
 if __name__=="__main__":
