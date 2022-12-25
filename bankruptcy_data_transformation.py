@@ -1,5 +1,7 @@
 import pandas as pd
 import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
 
 
 class BankruptcyDataset:
@@ -255,19 +257,14 @@ class BankruptcyDataset:
 
 
     def __add_leverage_variables(self):
-        # Add total liabilities / tangible total assets
         total_liabilities_cols = [i for i in self.df.columns
                                      if "total liabilities th" in i.lower()]
-        net_assets_cols = [i for i in self.df.columns
-                           if "net current assets" in i.lower()]
+        total_assets_cols = [i for i in self.df.columns
+                           if "total assets th" in i.lower()]
 
-        self.df["total_liabilities"] = \
+        self.transf_df["total_liabilities"] = \
             self.df[total_liabilities_cols].mean(axis=1) * 1000
-        self.df["net_assets"] = \
-            self.df[net_assets_cols].mean(axis=1)
 
-        self.transf_df["total_liabilities_by_net_assets"] = \
-            self.df["total_liabilities"] / self.df["net_assets"]
 
 
     def __add_liquidity_variables(self):
@@ -298,9 +295,6 @@ class BankruptcyDataset:
 
 
     def __add_profitability_variables(self):
-        # Add earnings before interest
-        # TODO: add the interest ot be able to calculate this variable
-
         # Add tax
         tax_cols = [i for i in self.df.columns
                     if "income taxes  th" in i.lower()]
@@ -312,7 +306,13 @@ class BankruptcyDataset:
         self.transf_df["EBTIDA"] = self.df[ebitda_cols].mean(axis=1) * 1000
 
         # Add ROE (replaced by return on total assets)
-        # TODO: add the P/L to be able to calculate this variable
+        roa_cols = [i for i in self.df.columns
+                    if "return on total assets" in i.lower()]
+        self.df[roa_cols[0]] = self.df[roa_cols[0]].str.replace(",", ".")
+        self.df[roa_cols[1]] = self.df[roa_cols[1]].str.replace(",", ".")
+        self.df[roa_cols[2]] = self.df[roa_cols[2]].str.replace(",", ".")
+        self.df[roa_cols] = self.df[roa_cols].astype(float)
+        self.transf_df["roa"] = self.df[roa_cols].mean(axis=1)
 
 
     def __add_financing_variables(self):
@@ -327,6 +327,18 @@ class BankruptcyDataset:
         EBIT_cols = [i for i in self.df.columns if "ebit th" in i.lower()]
         self.transf_df["EBIT"] = self.df[EBIT_cols].mean(axis=1) * 1000
 
+        # Add current liabilities by total liabilities
+        current_liabilities_cols = [i for i in self.df.columns
+                                    if "current liabilities th" in i.lower()]
+        total_liabilities_cols = [i for i in self.df.columns
+                                  if "total liabilities th" in i.lower()]
+        self.df["current_liabilities"] = \
+            self.df[current_liabilities_cols].mean(axis=1) * 1000
+        self.df["total_liabilities"] = \
+            self.df[total_liabilities_cols].mean(axis=1) * 1000
+        self.transf_df["current_liabilites_by_total_liabilities"] = \
+            self.df["current_liabilities"] / self.df["total_liabilities"]
+
 
     def __add_activity_variables(self):
         # Add working capital / total assets
@@ -339,10 +351,9 @@ class BankruptcyDataset:
 
 
     def __add_growth_variables(self):
-        # TODO: add size classification
+        # add size classification
         self.transf_df["size_classification"] = \
             self.df["Category of the company"]
-        # TODO: add number of employees as proxy for size
         pass
 
 
@@ -352,6 +363,11 @@ class BankruptcyDataset:
             self.transf_df["tax"] / self.df["total_assets"]
         # Add sector
         self.transf_df["sector"] = self.df["NACE Rev. 2 main section"]
+        # Add number of employees
+        self.transf_df["n_employees"] = \
+            self.df["Number of employees (Last year) Last avail. yr"]\
+            .fillna(1)
+
 
 
     def df_to_csv(self):

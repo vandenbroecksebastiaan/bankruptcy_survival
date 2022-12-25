@@ -64,7 +64,7 @@ data$log_current_assets_by_current_liabilities <- log(data$current_assets_by_cur
 min <- min(
   data$log_current_assets_by_current_liabilities[is.finite(data$log_current_assets_by_current_liabilities)]
 )
-data$log_cash_by_current_liabilities <- replace(
+data$log_current_assets_by_current_liabilities <- replace(
   data$log_current_assets_by_current_liabilities, data$log_current_assets_by_current_liabilities == -Inf,
   min
 )
@@ -74,7 +74,7 @@ data$log_tax <- log(data$tax)
 min <- min(
   data$log_tax[is.finite(data$log_tax)]
 )
-data$log_cash_by_current_liabilities <- replace(
+data$log_tax <- replace(
   data$log_tax, data$log_tax == -Inf,
   min
 )
@@ -291,11 +291,11 @@ dev.off()
 # Iteration 1
 AIC_df = data.frame()
 fit <- emfrail(Surv(years_to_event, censor) ~
-                   transf_total_liabilities_by_net_assets
+                   log_total_liabilities_by_net_assets
                    + cluster(sector),
                  data = data)
 fit.AIC <- 2 * 1 - 2 * fit$loglik[2]
-AIC_df <- rbind(AIC_df, list("transf_total_liabilities_by_net_assets", "Iteration 1", fit.AIC))
+AIC_df <- rbind(AIC_df, list("log_total_liabilities_by_net_assets", "Iteration 1", fit.AIC))
 names(AIC_df) <- c("Variable", "iteration", "AIC")
 
 fit <- emfrail(Surv(years_to_event, censor) ~
@@ -320,39 +320,39 @@ fit.AIC <- 2 * 1 - 2 * fit$loglik[2]
 AIC_df <- rbind(AIC_df, list("log_current_assets_by_current_liabilities", "Iteration 1", fit.AIC))
 
 fit <- emfrail(Surv(years_to_event, censor) ~
-                   tax
+                   log_tax
                    + cluster(sector),
                  data = data)
 fit.AIC <- 2 * 1 - 2 * fit$loglik[2]
-AIC_df <- rbind(AIC_df, list("tax", "Iteration 1", fit.AIC))
+AIC_df <- rbind(AIC_df, list("log_tax", "Iteration 1", fit.AIC))
 
 fit <- emfrail(Surv(years_to_event, censor) ~
-                   financial_expenses_by_total_assets
+                   log_financial_expenses_by_total_assets
                    + cluster(sector),
                  data = data)
 fit.AIC <- 2 * 1 - 2 * fit$loglik[2]
-AIC_df <- rbind(AIC_df, list("financial_expenses_by_total_assets", "Iteration 1", fit.AIC))
+AIC_df <- rbind(AIC_df, list("log_financial_expenses_by_total_assets", "Iteration 1", fit.AIC))
 
 fit <- emfrail(Surv(years_to_event, censor) ~
-                   EBIT
+                   log_EBIT
                    + cluster(sector),
                  data = data)
 fit.AIC <- 2 * 1 - 2 * fit$loglik[2]
-AIC_df <- rbind(AIC_df, list("EBIT", "Iteration 1", fit.AIC))
+AIC_df <- rbind(AIC_df, list("log_EBIT", "Iteration 1", fit.AIC))
 
 fit <- emfrail(Surv(years_to_event, censor) ~
-                   working_capital_by_total_assets
+                   log_working_capital_by_total_assets
                    + cluster(sector),
                  data = data)
 fit.AIC <- 2 * 1 - 2 * fit$loglik[2]
-AIC_df <- rbind(AIC_df, list("working_capital_by_total_assets", "Iteration 1", fit.AIC))
+AIC_df <- rbind(AIC_df, list("log_working_capital_by_total_assets", "Iteration 1", fit.AIC))
 
 fit <- emfrail(Surv(years_to_event, censor) ~
-                   income_tax_by_total_assets
+                   log_income_tax_by_total_assets
                    + cluster(sector),
                  data = data)
 fit.AIC <- 2 * 1 - 2 * fit$loglik[2]
-AIC_df <- rbind(AIC_df, list("income_tax_by_total_assets", "Iteration 1", fit.AIC))
+AIC_df <- rbind(AIC_df, list("log_income_tax_by_total_assets", "Iteration 1", fit.AIC))
 
 fit <- emfrail(Surv(years_to_event, censor) ~
                    cooperative + nonprofit + other + private
@@ -362,11 +362,11 @@ fit.AIC <- 2 * 4 - 2 * fit$loglik[2]
 AIC_df <- rbind(AIC_df, list("type_dummies", "Iteration 1", fit.AIC))
 
 fit <- emfrail(Surv(years_to_event, censor) ~
-                   EBITDA
+                   log_EBITDA
                    + cluster(sector),
                  data = data)
 fit.AIC <- 2 * 1 - 2 * fit$loglik[2]
-AIC_df <- rbind(AIC_df, list("EBITDA", "Iteration 1", fit.AIC))
+AIC_df <- rbind(AIC_df, list("log_EBITDA", "Iteration 1", fit.AIC))
 
 fit <- emfrail(Surv(years_to_event, censor) ~
                    size_small + size_large + size_v_large
@@ -375,875 +375,534 @@ fit <- emfrail(Surv(years_to_event, censor) ~
 fit.AIC <- 2 * 3 - 2 * fit$loglik[2]
 AIC_df <- rbind(AIC_df, list("size_dummmies", "Iteration 1", fit.AIC))
 
-AIC_df[AIC_df$iteration=="Iteration 1"]
-#                                     Variable AIC
-# 1     transf_total_liabilities_by_net_assets 53272.44
-# 2                   log_cash_by_total_assets 52969.39
-# 3            log_cash_by_current_liabilities 52511.14
-# 4  log_current_assets_by_current_liabilities 52345.74 <-
-# 5                                        tax 52942.31
-# 6         financial_expenses_by_total_assets 53263.75
-# 7                                       EBIT 53283.42
-# 8            working_capital_by_total_assets 53258.00
-# 9                 income_tax_by_total_assets 53279.39
-# 10                              type_dummies 52521.67
-# 11                                    EBITDA 53281.52
-# 12                             size_dummmies 53029.85
+AIC_df[AIC_df$iteration=="Iteration 1",]
+#                                     Variable   iteration      AIC
+# 1        log_total_liabilities_by_net_assets Iteration 1 25714.76 <-
+# 2                   log_cash_by_total_assets Iteration 1 59993.60
+# 3            log_cash_by_current_liabilities Iteration 1 59137.00
+# 4  log_current_assets_by_current_liabilities Iteration 1 59117.92
+# 5                                    log_tax Iteration 1 58281.23
+# 6     log_financial_expenses_by_total_assets Iteration 1 59753.98
+# 7                                   log_EBIT Iteration 1 26072.96
+# 8        log_working_capital_by_total_assets Iteration 1 36181.37
+# 9             log_income_tax_by_total_assets Iteration 1 59204.57
+# 10                              type_dummies Iteration 1 60267.79
+# 11                                log_EBITDA Iteration 1 35034.76
+# 12                             size_dummmies Iteration 1 59801.01
 
 # Iteration 2
-AIC_df = data.frame()
 fit <- emfrail(Surv(years_to_event, censor) ~
-                   log_current_assets_by_current_liabilities
-                   + transf_total_liabilities_by_net_assets
-                   + cluster(sector),
-                 data = data)
-fit.AIC <- 2 * 2 - 2 * fit$loglik[2]
-AIC_df <- rbind(AIC_df, list("transf_total_liabilities_by_net_assets", fit.AIC))
-names(AIC_df) <- c("Variable", "AIC")
-
-fit <- emfrail(Surv(years_to_event, censor) ~
-                   log_current_assets_by_current_liabilities
+                   log_total_liabilities_by_net_assets
                    + log_cash_by_total_assets
                    + cluster(sector),
                  data = data)
 fit.AIC <- 2 * 2 - 2 * fit$loglik[2]
-AIC_df <- rbind(AIC_df, list("log_cash_by_total_assets", fit.AIC))
+AIC_df <- rbind(AIC_df, list("log_cash_by_total_assets", "Iteration 2", fit.AIC))
 
 fit <- emfrail(Surv(years_to_event, censor) ~
-                   log_current_assets_by_current_liabilities
+                   log_total_liabilities_by_net_assets
                    + log_cash_by_current_liabilities
                    + cluster(sector),
                  data = data)
-fit.AIC <- 2 * 2 - 2 * fit$loglik[2]
-AIC_df <- rbind(AIC_df, list("log_cash_by_current_liabilities", fit.AIC))
+fit.AIC <- 2 * 1 - 2 * fit$loglik[2]
+AIC_df <- rbind(AIC_df, list("log_cash_by_current_liabilities", "Iteration 2", fit.AIC))
 
 fit <- emfrail(Surv(years_to_event, censor) ~
-                   log_current_assets_by_current_liabilities
-                   + tax
+                   log_total_liabilities_by_net_assets
+                   + log_current_assets_by_current_liabilities
                    + cluster(sector),
                  data = data)
 fit.AIC <- 2 * 2 - 2 * fit$loglik[2]
-AIC_df <- rbind(AIC_df, list("tax", fit.AIC))
+AIC_df <- rbind(AIC_df, list("log_current_assets_by_current_liabilities", "Iteration 2", fit.AIC))
 
 fit <- emfrail(Surv(years_to_event, censor) ~
-                   log_current_assets_by_current_liabilities
-                   + financial_expenses_by_total_assets
-                   + cluster(sector),
-                 data = data)
-fit.AIC <- 2 * 2- 2 * fit$loglik[2]
-AIC_df <- rbind(AIC_df, list("financial_expenses_by_total_assets", fit.AIC))
-
-fit <- emfrail(Surv(years_to_event, censor) ~
-                   log_current_assets_by_current_liabilities
-                   + EBIT
+                   log_total_liabilities_by_net_assets
+                   + log_tax
                    + cluster(sector),
                  data = data)
 fit.AIC <- 2 * 2 - 2 * fit$loglik[2]
-AIC_df <- rbind(AIC_df, list("EBIT", fit.AIC))
+AIC_df <- rbind(AIC_df, list("log_tax", "Iteration 2", fit.AIC))
 
 fit <- emfrail(Surv(years_to_event, censor) ~
-                   log_current_assets_by_current_liabilities
-                   + working_capital_by_total_assets
+                   log_total_liabilities_by_net_assets
+                   + log_financial_expenses_by_total_assets
                    + cluster(sector),
                  data = data)
 fit.AIC <- 2 * 2 - 2 * fit$loglik[2]
-AIC_df <- rbind(AIC_df, list("working_capital_by_total_assets", fit.AIC))
+AIC_df <- rbind(AIC_df, list("log_financial_expenses_by_total_assets", "Iteration 2", fit.AIC))
 
 fit <- emfrail(Surv(years_to_event, censor) ~
-                   log_current_assets_by_current_liabilities
-                   + income_tax_by_total_assets
+                   log_total_liabilities_by_net_assets
+                   + log_EBIT
                    + cluster(sector),
                  data = data)
 fit.AIC <- 2 * 2 - 2 * fit$loglik[2]
-AIC_df <- rbind(AIC_df, list("income_tax_by_total_assets", fit.AIC))
+AIC_df <- rbind(AIC_df, list("log_EBIT", "Iteration 2", fit.AIC))
 
 fit <- emfrail(Surv(years_to_event, censor) ~
-                   log_current_assets_by_current_liabilities
+                   log_total_liabilities_by_net_assets
+                   + log_working_capital_by_total_assets
+                   + cluster(sector),
+                 data = data)
+fit.AIC <- 2 * 2 - 2 * fit$loglik[2]
+AIC_df <- rbind(AIC_df, list("log_working_capital_by_total_assets", "Iteration 2", fit.AIC))
+
+fit <- emfrail(Surv(years_to_event, censor) ~
+                   log_total_liabilities_by_net_assets
+                   + log_income_tax_by_total_assets
+                   + cluster(sector),
+                 data = data)
+fit.AIC <- 2 * 2 - 2 * fit$loglik[2]
+AIC_df <- rbind(AIC_df, list("log_income_tax_by_total_assets", "Iteration 2", fit.AIC))
+
+fit <- emfrail(Surv(years_to_event, censor) ~
+                   log_total_liabilities_by_net_assets
                    + cooperative + nonprofit + other + private
                    + cluster(sector),
                  data = data)
 fit.AIC <- 2 * 5 - 2 * fit$loglik[2]
-AIC_df <- rbind(AIC_df, list("type_dummies", fit.AIC))
+AIC_df <- rbind(AIC_df, list("type_dummies", "Iteration 2", fit.AIC))
 
 fit <- emfrail(Surv(years_to_event, censor) ~
-                   log_current_assets_by_current_liabilities
-                   + EBITDA
+                   log_total_liabilities_by_net_assets
+                   + log_EBITDA
                    + cluster(sector),
                  data = data)
 fit.AIC <- 2 * 2 - 2 * fit$loglik[2]
-AIC_df <- rbind(AIC_df, list("EBITDA", fit.AIC))
+AIC_df <- rbind(AIC_df, list("log_EBITDA", "Iteration 2", fit.AIC))
 
 fit <- emfrail(Surv(years_to_event, censor) ~
-                   log_current_assets_by_current_liabilities
+                   log_total_liabilities_by_net_assets
                    + size_small + size_large + size_v_large
                    + cluster(sector),
                  data = data)
 fit.AIC <- 2 * 4 - 2 * fit$loglik[2]
-AIC_df <- rbind(AIC_df, list("size_dummies", fit.AIC))
+AIC_df <- rbind(AIC_df, list("size_dummmies", "Iteration 2", fit.AIC))
 
-AIC_df
-#                                  Variable AIC
-# 1  transf_total_liabilities_by_net_assets 52344.21
-# 2                log_cash_by_total_assets 52236.22
-# 3         log_cash_by_current_liabilities 52143.19
-# 4                                     tax 52105.36
-# 5      financial_expenses_by_total_assets 52346.76
-# 6                                    EBIT 52347.73
-# 7         working_capital_by_total_assets 52339.90
-# 8              income_tax_by_total_assets 52347.12
-# 9                            type_dummies 51683.14 <-
-# 10                                 EBITDA 52346.46
-# 11                           size_dummies 52080.25
+AIC_df[AIC_df$iteration=="Iteration 2",]
+#                                     Variable   iteration      AIC
+# 13                  log_cash_by_total_assets Iteration 2 25514.74
+# 14           log_cash_by_current_liabilities Iteration 2 25236.32
+# 15 log_current_assets_by_current_liabilities Iteration 2 25091.19
+# 16                                   log_tax Iteration 2 24911.49
+# 17    log_financial_expenses_by_total_assets Iteration 2 25627.77
+# 18                                  log_EBIT Iteration 2 14985.93 <-
+# 19       log_working_capital_by_total_assets Iteration 2 19885.24
+# 20            log_income_tax_by_total_assets Iteration 2 25323.80
+# 21                              type_dummies Iteration 2 25631.42
+# 22                                log_EBITDA Iteration 2 17746.90
+# 23                             size_dummmies Iteration 2 25335.27
 
 # Iteration 3
-AIC_df = data.frame()
 fit <- emfrail(Surv(years_to_event, censor) ~
-                   log_current_assets_by_current_liabilities
+                   log_total_liabilities_by_net_assets
+                   + log_EBIT
+                   + log_cash_by_total_assets
+                   + cluster(sector),
+                 data = data)
+fit.AIC <- 2 * 3 - 2 * fit$loglik[2]
+AIC_df <- rbind(AIC_df, list("log_cash_by_total_assets", "Iteration 2", fit.AIC))
+
+fit <- emfrail(Surv(years_to_event, censor) ~
+                   log_total_liabilities_by_net_assets
+                   + log_EBIT
+                   + log_cash_by_current_liabilities
+                   + cluster(sector),
+                 data = data)
+fit.AIC <- 2 * 3 - 2 * fit$loglik[2]
+AIC_df <- rbind(AIC_df, list("log_cash_by_current_liabilities", "Iteration 3", fit.AIC))
+
+fit <- emfrail(Surv(years_to_event, censor) ~
+                   log_total_liabilities_by_net_assets
+                   + log_EBIT
+                   + log_current_assets_by_current_liabilities
+                   + cluster(sector),
+                 data = data)
+fit.AIC <- 2 * 3 - 2 * fit$loglik[2]
+AIC_df <- rbind(AIC_df, list("log_current_assets_by_current_liabilities", "Iteration 3", fit.AIC))
+
+fit <- emfrail(Surv(years_to_event, censor) ~
+                   log_total_liabilities_by_net_assets
+                   + log_EBIT
+                   + log_tax
+                   + cluster(sector),
+                 data = data)
+fit.AIC <- 2 * 3 - 2 * fit$loglik[2]
+AIC_df <- rbind(AIC_df, list("log_tax", "Iteration 3", fit.AIC))
+
+fit <- emfrail(Surv(years_to_event, censor) ~
+                   log_total_liabilities_by_net_assets
+                   + log_EBIT
+                   + log_financial_expenses_by_total_assets
+                   + cluster(sector),
+                 data = data)
+fit.AIC <- 2 * 3 - 2 * fit$loglik[2]
+AIC_df <- rbind(AIC_df, list("log_financial_expenses_by_total_assets", "Iteration 3", fit.AIC))
+
+fit <- emfrail(Surv(years_to_event, censor) ~
+                   log_total_liabilities_by_net_assets
+                   + log_EBIT
+                   + log_working_capital_by_total_assets
+                   + cluster(sector),
+                 data = data)
+fit.AIC <- 2 * 3 - 2 * fit$loglik[2]
+AIC_df <- rbind(AIC_df, list("log_working_capital_by_total_assets", "Iteration 3", fit.AIC))
+
+fit <- emfrail(Surv(years_to_event, censor) ~
+                   log_total_liabilities_by_net_assets
+                   + log_EBIT
+                   + log_income_tax_by_total_assets
+                   + cluster(sector),
+                 data = data)
+fit.AIC <- 2 * 3 - 2 * fit$loglik[2]
+AIC_df <- rbind(AIC_df, list("log_income_tax_by_total_assets", "Iteration 3", fit.AIC))
+
+fit <- emfrail(Surv(years_to_event, censor) ~
+                   log_total_liabilities_by_net_assets
+                   + log_EBIT
                    + cooperative + nonprofit + other + private
-                   + transf_total_liabilities_by_net_assets
                    + cluster(sector),
                  data = data)
 fit.AIC <- 2 * 6 - 2 * fit$loglik[2]
-AIC_df <- rbind(AIC_df, list("transf_total_liabilities_by_net_assets", fit.AIC))
-names(AIC_df) <- c("Variable", "AIC")
+AIC_df <- rbind(AIC_df, list("type_dummies", "Iteration 3", fit.AIC))
 
 fit <- emfrail(Surv(years_to_event, censor) ~
-                   log_current_assets_by_current_liabilities
+                   log_total_liabilities_by_net_assets
+                   + log_EBIT
+                   + log_EBITDA
+                   + cluster(sector),
+                 data = data)
+fit.AIC <- 2 * 3 - 2 * fit$loglik[2]
+AIC_df <- rbind(AIC_df, list("log_EBITDA", "Iteration 3", fit.AIC))
+
+fit <- emfrail(Surv(years_to_event, censor) ~
+                   log_total_liabilities_by_net_assets
+                   + log_EBIT
+                   + size_small + size_large + size_v_large
+                   + cluster(sector),
+                 data = data)
+fit.AIC <- 2 * 5 - 2 * fit$loglik[2]
+AIC_df <- rbind(AIC_df, list("size_dummmies", "Iteration 3", fit.AIC))
+
+AIC_df[AIC_df$iteration=="Iteration 3",]
+#                                     Variable   iteration      AIC
+# 25           log_cash_by_current_liabilities Iteration 3 14624.87
+# 26 log_current_assets_by_current_liabilities Iteration 3 14587.80
+# 27                                   log_tax Iteration 3 14890.39
+# 28    log_financial_expenses_by_total_assets Iteration 3 14952.30
+# 29       log_working_capital_by_total_assets Iteration 3 11512.54 <-
+# 30            log_income_tax_by_total_assets Iteration 3 14823.38
+# 31                              type_dummies Iteration 3 14942.04
+# 32                                log_EBITDA Iteration 3 14699.08
+# 33                             size_dummmies Iteration 3 14948.72
+
+# Iteration 4
+fit <- emfrail(Surv(years_to_event, censor) ~
+                   log_total_liabilities_by_net_assets
+                   + log_EBIT
+                   + log_working_capital_by_total_assets
+                   + log_cash_by_total_assets
+                   + cluster(sector),
+                 data = data)
+fit.AIC <- 2 * 4 - 2 * fit$loglik[2]
+AIC_df <- rbind(AIC_df, list("log_cash_by_total_assets", "Iteration 4", fit.AIC))
+
+fit <- emfrail(Surv(years_to_event, censor) ~
+                   log_total_liabilities_by_net_assets
+                   + log_EBIT
+                   + log_working_capital_by_total_assets
+                   + log_cash_by_current_liabilities
+                   + cluster(sector),
+                 data = data)
+fit.AIC <- 2 * 4 - 2 * fit$loglik[2]
+AIC_df <- rbind(AIC_df, list("log_cash_by_current_liabilities", "Iteration 4", fit.AIC))
+
+fit <- emfrail(Surv(years_to_event, censor) ~
+                   log_total_liabilities_by_net_assets
+                   + log_EBIT
+                   + log_working_capital_by_total_assets
+                   + log_current_assets_by_current_liabilities
+                   + cluster(sector),
+                 data = data)
+fit.AIC <- 2 * 4 - 2 * fit$loglik[2]
+AIC_df <- rbind(AIC_df, list("log_current_assets_by_current_liabilities", "Iteration 4", fit.AIC))
+
+fit <- emfrail(Surv(years_to_event, censor) ~
+                   log_total_liabilities_by_net_assets
+                   + log_EBIT
+                   + log_working_capital_by_total_assets
+                   + log_tax
+                   + cluster(sector),
+                 data = data)
+fit.AIC <- 2 * 4 - 2 * fit$loglik[2]
+AIC_df <- rbind(AIC_df, list("log_tax", "Iteration 4", fit.AIC))
+
+fit <- emfrail(Surv(years_to_event, censor) ~
+                   log_total_liabilities_by_net_assets
+                   + log_EBIT
+                   + log_working_capital_by_total_assets
+                   + log_financial_expenses_by_total_assets
+                   + cluster(sector),
+                 data = data)
+fit.AIC <- 2 * 4 - 2 * fit$loglik[2]
+AIC_df <- rbind(AIC_df, list("log_financial_expenses_by_total_assets", "Iteration 4", fit.AIC))
+
+fit <- emfrail(Surv(years_to_event, censor) ~
+                   log_total_liabilities_by_net_assets
+                   + log_EBIT
+                   + log_working_capital_by_total_assets
+                   + log_income_tax_by_total_assets
+                   + cluster(sector),
+                 data = data)
+fit.AIC <- 2 * 4 - 2 * fit$loglik[2]
+AIC_df <- rbind(AIC_df, list("log_income_tax_by_total_assets", "Iteration 4", fit.AIC))
+
+fit <- emfrail(Surv(years_to_event, censor) ~
+                   log_total_liabilities_by_net_assets
+                   + log_EBIT
+                   + log_working_capital_by_total_assets
                    + cooperative + nonprofit + other + private
+                   + cluster(sector),
+                 data = data)
+fit.AIC <- 2 * 7 - 2 * fit$loglik[2]
+AIC_df <- rbind(AIC_df, list("type_dummies", "Iteration 4", fit.AIC))
+
+fit <- emfrail(Surv(years_to_event, censor) ~
+                   log_total_liabilities_by_net_assets
+                   + log_EBIT
+                   + log_working_capital_by_total_assets
+                   + log_EBITDA
+                   + cluster(sector),
+                 data = data)
+fit.AIC <- 2 * 4 - 2 * fit$loglik[2]
+AIC_df <- rbind(AIC_df, list("log_EBITDA", "Iteration 4", fit.AIC))
+
+fit <- emfrail(Surv(years_to_event, censor) ~
+                   log_total_liabilities_by_net_assets
+                   + log_EBIT
+                   + log_working_capital_by_total_assets
+                   + size_small + size_large + size_v_large
+                   + cluster(sector),
+                 data = data)
+fit.AIC <- 2 * 6 - 2 * fit$loglik[2]
+AIC_df <- rbind(AIC_df, list("size_dummmies", "Iteration 4", fit.AIC))
+
+AIC_df[AIC_df$iteration=="Iteration 4",]
+#                                     Variable   iteration      AIC
+# 34                  log_cash_by_total_assets Iteration 4 11396.02
+# 35           log_cash_by_current_liabilities Iteration 4 11276.54
+# 36 log_current_assets_by_current_liabilities Iteration 4 11237.64 <-
+# 37                                   log_tax Iteration 4 11454.35
+# 38    log_financial_expenses_by_total_assets Iteration 4 11485.93
+# 39            log_income_tax_by_total_assets Iteration 4 11395.58
+# 40                              type_dummies Iteration 4 11483.17
+# 41                                log_EBITDA Iteration 4 11315.01
+# 42                             size_dummmies Iteration 4 11484.82
+
+# Iteration 5
+fit <- emfrail(Surv(years_to_event, censor) ~
+                   log_total_liabilities_by_net_assets
+                   + log_EBIT
+                   + log_working_capital_by_total_assets
+                   + log_current_assets_by_current_liabilities
+                   + log_cash_by_total_assets
+                   + cluster(sector),
+                 data = data)
+fit.AIC <- 2 * 5 - 2 * fit$loglik[2]
+AIC_df <- rbind(AIC_df, list("log_cash_by_total_assets", "Iteration 5", fit.AIC))
+
+fit <- emfrail(Surv(years_to_event, censor) ~
+                   log_total_liabilities_by_net_assets
+                   + log_EBIT
+                   + log_working_capital_by_total_assets
+                   + log_current_assets_by_current_liabilities
+                   + log_cash_by_current_liabilities
+                   + cluster(sector),
+                 data = data)
+fit.AIC <- 2 * 5 - 2 * fit$loglik[2]
+AIC_df <- rbind(AIC_df, list("log_cash_by_current_liabilities", "Iteration 5", fit.AIC))
+
+fit <- emfrail(Surv(years_to_event, censor) ~
+                   log_total_liabilities_by_net_assets
+                   + log_EBIT
+                   + log_working_capital_by_total_assets
+                   + log_current_assets_by_current_liabilities
+                   + log_tax
+                   + cluster(sector),
+                 data = data)
+fit.AIC <- 2 * 5 - 2 * fit$loglik[2]
+AIC_df <- rbind(AIC_df, list("log_tax", "Iteration 5", fit.AIC))
+
+fit <- emfrail(Surv(years_to_event, censor) ~
+                   log_total_liabilities_by_net_assets
+                   + log_EBIT
+                   + log_working_capital_by_total_assets
+                   + log_current_assets_by_current_liabilities
+                   + log_financial_expenses_by_total_assets
+                   + cluster(sector),
+                 data = data)
+fit.AIC <- 2 * 5 - 2 * fit$loglik[2]
+AIC_df <- rbind(AIC_df, list("log_financial_expenses_by_total_assets", "Iteration 5", fit.AIC))
+
+fit <- emfrail(Surv(years_to_event, censor) ~
+                   log_total_liabilities_by_net_assets
+                   + log_EBIT
+                   + log_working_capital_by_total_assets
+                   + log_current_assets_by_current_liabilities
+                   + log_income_tax_by_total_assets
+                   + cluster(sector),
+                 data = data)
+fit.AIC <- 2 * 5 - 2 * fit$loglik[2]
+AIC_df <- rbind(AIC_df, list("log_income_tax_by_total_assets", "Iteration 5", fit.AIC))
+
+fit <- emfrail(Surv(years_to_event, censor) ~
+                   log_total_liabilities_by_net_assets
+                   + log_EBIT
+                   + log_working_capital_by_total_assets
+                   + log_current_assets_by_current_liabilities
+                   + cooperative + nonprofit + other + private
+                   + cluster(sector),
+                 data = data)
+fit.AIC <- 2 * 8 - 2 * fit$loglik[2]
+AIC_df <- rbind(AIC_df, list("type_dummies", "Iteration 5", fit.AIC))
+
+fit <- emfrail(Surv(years_to_event, censor) ~
+                   log_total_liabilities_by_net_assets
+                   + log_EBIT
+                   + log_working_capital_by_total_assets
+                   + log_current_assets_by_current_liabilities
+                   + log_EBITDA
+                   + cluster(sector),
+                 data = data)
+fit.AIC <- 2 * 5 - 2 * fit$loglik[2]
+AIC_df <- rbind(AIC_df, list("log_EBITDA", "Iteration 5", fit.AIC))
+
+fit <- emfrail(Surv(years_to_event, censor) ~
+                   log_total_liabilities_by_net_assets
+                   + log_EBIT
+                   + log_working_capital_by_total_assets
+                   + log_current_assets_by_current_liabilities
+                   + size_small + size_large + size_v_large
+                   + cluster(sector),
+                 data = data)
+fit.AIC <- 2 * 7 - 2 * fit$loglik[2]
+AIC_df <- rbind(AIC_df, list("size_dummmies", "Iteration 5", fit.AIC))
+
+AIC_df[AIC_df$iteration=="Iteration 5",]
+#                                  Variable   iteration      AIC
+# 43               log_cash_by_total_assets Iteration 5 11148.62
+# 44        log_cash_by_current_liabilities Iteration 5 11107.54 <-
+# 45                                log_tax Iteration 5 11167.51
+# 46 log_financial_expenses_by_total_assets Iteration 5 11222.10
+# 47         log_income_tax_by_total_assets Iteration 5 11105.67
+# 48                           type_dummies Iteration 5 11210.05
+# 49                             log_EBITDA Iteration 5 11056.24
+# 50                          size_dummmies Iteration 5 11198.18
+
+# Iteration 6
+fit <- emfrail(Surv(years_to_event, censor) ~
+                   log_total_liabilities_by_net_assets
+                   + log_EBIT
+                   + log_working_capital_by_total_assets
+                   + log_current_assets_by_current_liabilities
+                   + log_cash_by_current_liabilities
                    + log_cash_by_total_assets
                    + cluster(sector),
                  data = data)
 fit.AIC <- 2 * 6 - 2 * fit$loglik[2]
-AIC_df <- rbind(AIC_df, list("log_cash_by_total_assets", fit.AIC))
+AIC_df <- rbind(AIC_df, list("log_cash_by_total_assets", "Iteration 6", fit.AIC))
 
 fit <- emfrail(Surv(years_to_event, censor) ~
-                   log_current_assets_by_current_liabilities
-                   + cooperative + nonprofit + other + private
+                   log_total_liabilities_by_net_assets
+                   + log_EBIT
+                   + log_working_capital_by_total_assets
+                   + log_current_assets_by_current_liabilities
                    + log_cash_by_current_liabilities
+                   + log_tax
                    + cluster(sector),
                  data = data)
 fit.AIC <- 2 * 6 - 2 * fit$loglik[2]
-AIC_df <- rbind(AIC_df, list("log_cash_by_current_liabilities", fit.AIC))
+AIC_df <- rbind(AIC_df, list("log_tax", "Iteration 6", fit.AIC))
 
 fit <- emfrail(Surv(years_to_event, censor) ~
-                   log_current_assets_by_current_liabilities
-                   + cooperative + nonprofit + other + private
-                   + tax
+                   log_total_liabilities_by_net_assets
+                   + log_EBIT
+                   + log_working_capital_by_total_assets
+                   + log_current_assets_by_current_liabilities
+                   + log_cash_by_current_liabilities
+                   + log_financial_expenses_by_total_assets
                    + cluster(sector),
                  data = data)
 fit.AIC <- 2 * 6 - 2 * fit$loglik[2]
-AIC_df <- rbind(AIC_df, list("tax", fit.AIC))
+AIC_df <- rbind(AIC_df, list("log_financial_expenses_by_total_assets", "Iteration 6", fit.AIC))
 
 fit <- emfrail(Surv(years_to_event, censor) ~
-                   log_current_assets_by_current_liabilities
-                   + cooperative + nonprofit + other + private
-                   + financial_expenses_by_total_assets
+                   log_total_liabilities_by_net_assets
+                   + log_EBIT
+                   + log_working_capital_by_total_assets
+                   + log_current_assets_by_current_liabilities
+                   + log_cash_by_current_liabilities
+                   + log_income_tax_by_total_assets
                    + cluster(sector),
                  data = data)
 fit.AIC <- 2 * 6 - 2 * fit$loglik[2]
-AIC_df <- rbind(AIC_df, list("financial_expenses_by_total_assets", fit.AIC))
+AIC_df <- rbind(AIC_df, list("log_income_tax_by_total_assets", "Iteration 6", fit.AIC))
 
 fit <- emfrail(Surv(years_to_event, censor) ~
-                   log_current_assets_by_current_liabilities
+                   log_total_liabilities_by_net_assets
+                   + log_EBIT
+                   + log_working_capital_by_total_assets
+                   + log_current_assets_by_current_liabilities
+                   + log_cash_by_current_liabilities
                    + cooperative + nonprofit + other + private
-                   + EBIT
+                   + cluster(sector),
+                 data = data)
+fit.AIC <- 2 * 9 - 2 * fit$loglik[2]
+AIC_df <- rbind(AIC_df, list("type_dummies", "Iteration 6", fit.AIC))
+
+fit <- emfrail(Surv(years_to_event, censor) ~
+                   log_total_liabilities_by_net_assets
+                   + log_EBIT
+                   + log_working_capital_by_total_assets
+                   + log_current_assets_by_current_liabilities
+                   + log_cash_by_current_liabilities
+                   + log_EBITDA
                    + cluster(sector),
                  data = data)
 fit.AIC <- 2 * 6 - 2 * fit$loglik[2]
-AIC_df <- rbind(AIC_df, list("EBIT", fit.AIC))
+AIC_df <- rbind(AIC_df, list("log_EBITDA", "Iteration 6", fit.AIC))
 
 fit <- emfrail(Surv(years_to_event, censor) ~
-                   log_current_assets_by_current_liabilities
-                   + cooperative + nonprofit + other + private
-                   + working_capital_by_total_assets
-                   + cluster(sector),
-                 data = data)
-fit.AIC <- 2 * 6 - 2 * fit$loglik[2]
-AIC_df <- rbind(AIC_df, list("working_capital_by_total_assets", fit.AIC))
-
-fit <- emfrail(Surv(years_to_event, censor) ~
-                   log_current_assets_by_current_liabilities
-                   + cooperative + nonprofit + other + private
-                   + income_tax_by_total_assets
-                   + cluster(sector),
-                 data = data)
-fit.AIC <- 2 * 6 - 2 * fit$loglik[2]
-AIC_df <- rbind(AIC_df, list("income_tax_by_total_assets", fit.AIC))
-
-fit <- emfrail(Surv(years_to_event, censor) ~
-                   log_current_assets_by_current_liabilities
-                   + cooperative + nonprofit + other + private
-                   + EBITDA
-                   + cluster(sector),
-                 data = data)
-fit.AIC <- 2 * 6 - 2 * fit$loglik[2]
-AIC_df <- rbind(AIC_df, list("EBITDA", fit.AIC))
-
-fit <- emfrail(Surv(years_to_event, censor) ~
-                   log_current_assets_by_current_liabilities
-                   + cooperative + nonprofit + other + private
+                   log_total_liabilities_by_net_assets
+                   + log_EBIT
+                   + log_working_capital_by_total_assets
+                   + log_current_assets_by_current_liabilities
+                   + log_cash_by_current_liabilities
                    + size_small + size_large + size_v_large
                    + cluster(sector),
                  data = data)
 fit.AIC <- 2 * 8 - 2 * fit$loglik[2]
-AIC_df <- rbind(AIC_df, list("size_dummies", fit.AIC))
+AIC_df <- rbind(AIC_df, list("size_dummmies", "Iteration 6", fit.AIC))
 
-AIC_df
-#                                  Variable AIC
-# 1  transf_total_liabilities_by_net_assets 51682.81
-# 2                log_cash_by_total_assets 51540.10
-# 3         log_cash_by_current_liabilities 51451.68 <-
-# 4                                     tax 51539.15
-# 5      financial_expenses_by_total_assets 51683.92
-# 6                                    EBIT 51684.65
-# 7         working_capital_by_total_assets 51675.80
-# 8              income_tax_by_total_assets 51683.95
-# 9                                  EBITDA 51685.10
-# 10                           size_dummies 51592.41
+AIC_df[AIC_df$iteration=="Iteration 6",]
+#                                  Variable   iteration      AIC
+# 51               log_cash_by_total_assets Iteration 6 10988.88
+# 52                                log_tax Iteration 6 11038.80
+# 53 log_financial_expenses_by_total_assets Iteration 6 11091.89
+# 54         log_income_tax_by_total_assets Iteration 6 10964.85
+# 55                           type_dummies Iteration 6 11075.96
+# 56                             log_EBITDA Iteration 6 10934.76 <-
+# 57                          size_dummmies Iteration 6 11048.98
 
-# Iteration 4
-AIC_df = data.frame()
-fit <- emfrail(Surv(years_to_event, censor) ~
-                   log_current_assets_by_current_liabilities
-                   + cooperative + nonprofit + other + private
-                   + log_cash_by_current_liabilities
-                   + transf_total_liabilities_by_net_assets
-                   + cluster(sector),
-                 data = data)
-fit.AIC <- 2 * 7 - 2 * fit$loglik[2]
-AIC_df <- rbind(AIC_df, list("transf_total_liabilities_by_net_assets", fit.AIC))
-names(AIC_df) <- c("Variable", "AIC")
 
-fit <- emfrail(Surv(years_to_event, censor) ~
-                   log_current_assets_by_current_liabilities
-                   + cooperative + nonprofit + other + private
-                   + log_cash_by_current_liabilities
-                   + log_cash_by_total_assets
-                   + cluster(sector),
-                 data = data)
-fit.AIC <- 2 * 7 - 2 * fit$loglik[2]
-AIC_df <- rbind(AIC_df, list("log_cash_by_total_assets", fit.AIC))
 
-fit <- emfrail(Surv(years_to_event, censor) ~
-                   log_current_assets_by_current_liabilities
-                   + cooperative + nonprofit + other + private
-                   + log_cash_by_current_liabilities
-                   + tax
-                   + cluster(sector),
-                 data = data)
-fit.AIC <- 2 * 7 - 2 * fit$loglik[2]
-AIC_df <- rbind(AIC_df, list("tax", fit.AIC))
 
-fit <- emfrail(Surv(years_to_event, censor) ~
-                   log_current_assets_by_current_liabilities
-                   + cooperative + nonprofit + other + private
-                   + log_cash_by_current_liabilities
-                   + financial_expenses_by_total_assets
-                   + cluster(sector),
-                 data = data)
-fit.AIC <- 2 * 7 - 2 * fit$loglik[2]
-AIC_df <- rbind(AIC_df, list("financial_expenses_by_total_assets", fit.AIC))
 
-fit <- emfrail(Surv(years_to_event, censor) ~
-                   log_current_assets_by_current_liabilities
-                   + cooperative + nonprofit + other + private
-                   + log_cash_by_current_liabilities
-                   + EBIT
-                   + cluster(sector),
-                 data = data)
-fit.AIC <- 2 * 7 - 2 * fit$loglik[2]
-AIC_df <- rbind(AIC_df, list("EBIT", fit.AIC))
 
-fit <- emfrail(Surv(years_to_event, censor) ~
-                   log_current_assets_by_current_liabilities
-                   + cooperative + nonprofit + other + private
-                   + log_cash_by_current_liabilities
-                   + working_capital_by_total_assets
-                   + cluster(sector),
-                 data = data)
-fit.AIC <- 2 * 7 - 2 * fit$loglik[2]
-AIC_df <- rbind(AIC_df, list("working_capital_by_total_assets", fit.AIC))
 
-fit <- emfrail(Surv(years_to_event, censor) ~
-                   log_current_assets_by_current_liabilities
-                   + cooperative + nonprofit + other + private
-                   + log_cash_by_current_liabilities
-                   + income_tax_by_total_assets
-                   + cluster(sector),
-                 data = data)
-fit.AIC <- 2 * 7 - 2 * fit$loglik[2]
-AIC_df <- rbind(AIC_df, list("income_tax_by_total_assets", fit.AIC))
 
-fit <- emfrail(Surv(years_to_event, censor) ~
-                   log_current_assets_by_current_liabilities
-                   + cooperative + nonprofit + other + private
-                   + log_cash_by_current_liabilities
-                   + EBITDA
-                   + cluster(sector),
-                 data = data)
-fit.AIC <- 2 * 7 - 2 * fit$loglik[2]
-AIC_df <- rbind(AIC_df, list("EBITDA", fit.AIC))
 
-fit <- emfrail(Surv(years_to_event, censor) ~
-                   log_current_assets_by_current_liabilities
-                   + cooperative + nonprofit + other + private
-                   + log_cash_by_current_liabilities
-                   + size_small + size_large + size_v_large
-                   + cluster(sector),
-                 data = data)
-fit.AIC <- 2 * 9 - 2 * fit$loglik[2]
-AIC_df <- rbind(AIC_df, list("size_dummies", fit.AIC))
 
-AIC_df
-#                                 Variable AIC
-# 1 transf_total_liabilities_by_net_assets 51451.64
-# 2               log_cash_by_total_assets 51368.20
-# 3                                    tax 51318.45
-# 4     financial_expenses_by_total_assets 51450.53
-# 5                                   EBIT 51451.38
-# 6        working_capital_by_total_assets 51452.62
-# 7             income_tax_by_total_assets 51453.28
-# 8                                 EBITDA 51453.52
-# 9                           size_dummies 51330.05 <-
-
-# Iteration 5
-AIC_df = data.frame()
-fit <- emfrail(Surv(years_to_event, censor) ~
-                   log_current_assets_by_current_liabilities
-                   + cooperative + nonprofit + other + private
-                   + log_cash_by_current_liabilities
-                   + size_small + size_large + size_v_large
-                   + transf_total_liabilities_by_net_assets
-                   + cluster(sector),
-                 data = data)
-fit.AIC <- 2 * 10 - 2 * fit$loglik[2]
-AIC_df <- rbind(AIC_df, list("transf_total_liabilities_by_net_assets", fit.AIC))
-names(AIC_df) <- c("Variable", "AIC")
-
-fit <- emfrail(Surv(years_to_event, censor) ~
-                   log_current_assets_by_current_liabilities
-                   + cooperative + nonprofit + other + private
-                   + log_cash_by_current_liabilities
-                   + size_small + size_large + size_v_large
-                   + log_cash_by_total_assets
-                   + cluster(sector),
-                 data = data)
-fit.AIC <- 2 * 10 - 2 * fit$loglik[2]
-AIC_df <- rbind(AIC_df, list("log_cash_by_total_assets", fit.AIC))
-
-fit <- emfrail(Surv(years_to_event, censor) ~
-                   log_current_assets_by_current_liabilities
-                   + cooperative + nonprofit + other + private
-                   + log_cash_by_current_liabilities
-                   + size_small + size_large + size_v_large
-                   + tax
-                   + cluster(sector),
-                 data = data)
-fit.AIC <- 2 * 10 - 2 * fit$loglik[2]
-AIC_df <- rbind(AIC_df, list("tax", fit.AIC))
-
-fit <- emfrail(Surv(years_to_event, censor) ~
-                   log_current_assets_by_current_liabilities
-                   + cooperative + nonprofit + other + private
-                   + log_cash_by_current_liabilities
-                   + size_small + size_large + size_v_large
-                   + financial_expenses_by_total_assets
-                   + cluster(sector),
-                 data = data)
-fit.AIC <- 2 * 10 - 2 * fit$loglik[2]
-AIC_df <- rbind(AIC_df, list("financial_expenses_by_total_assets", fit.AIC))
-
-fit <- emfrail(Surv(years_to_event, censor) ~
-                   log_current_assets_by_current_liabilities
-                   + cooperative + nonprofit + other + private
-                   + log_cash_by_current_liabilities
-                   + size_small + size_large + size_v_large
-                   + EBIT
-                   + cluster(sector),
-                 data = data)
-fit.AIC <- 2 * 10 - 2 * fit$loglik[2]
-AIC_df <- rbind(AIC_df, list("EBIT", fit.AIC))
-
-fit <- emfrail(Surv(years_to_event, censor) ~
-                   log_current_assets_by_current_liabilities
-                   + cooperative + nonprofit + other + private
-                   + log_cash_by_current_liabilities
-                   + size_small + size_large + size_v_large
-                   + working_capital_by_total_assets
-                   + cluster(sector),
-                 data = data)
-fit.AIC <- 2 * 10 - 2 * fit$loglik[2]
-AIC_df <- rbind(AIC_df, list("working_capital_by_total_assets", fit.AIC))
-
-fit <- emfrail(Surv(years_to_event, censor) ~
-                   log_current_assets_by_current_liabilities
-                   + cooperative + nonprofit + other + private
-                   + log_cash_by_current_liabilities
-                   + size_small + size_large + size_v_large
-                   + income_tax_by_total_assets
-                   + cluster(sector),
-                 data = data)
-fit.AIC <- 2 * 10 - 2 * fit$loglik[2]
-AIC_df <- rbind(AIC_df, list("income_tax_by_total_assets", fit.AIC))
-
-fit <- emfrail(Surv(years_to_event, censor) ~
-                   log_current_assets_by_current_liabilities
-                   + cooperative + nonprofit + other + private
-                   + log_cash_by_current_liabilities
-                   + size_small + size_large + size_v_large
-                   + EBITDA
-                   + cluster(sector),
-                 data = data)
-fit.AIC <- 2 * 10 - 2 * fit$loglik[2]
-AIC_df <- rbind(AIC_df, list("EBITDA", fit.AIC))
-
-AIC_df
-#                                 Variable AIC
-# 1 transf_total_liabilities_by_net_assets 51329.81
-# 2               log_cash_by_total_assets 51256.28 <-
-# 3                                    tax 51263.97
-# 4     financial_expenses_by_total_assets 51325.94
-# 5                                   EBIT 51332.01
-# 6        working_capital_by_total_assets 51330.30
-# 7             income_tax_by_total_assets 51331.04
-# 8                                 EBITDA 51331.98
-
-# Iteration 6
-AIC_df = data.frame()
-fit <- emfrail(Surv(years_to_event, censor) ~
-                   log_current_assets_by_current_liabilities
-                   + cooperative + nonprofit + other + private
-                   + log_cash_by_current_liabilities
-                   + size_small + size_large + size_v_large
-                   + log_cash_by_total_assets
-                   + transf_total_liabilities_by_net_assets
-                   + cluster(sector),
-                 data = data)
-fit.AIC <- 2 * 11 - 2 * fit$loglik[2]
-AIC_df <- rbind(AIC_df, list("transf_total_liabilities_by_net_assets", fit.AIC))
-names(AIC_df) <- c("Variable", "AIC")
-
-fit <- emfrail(Surv(years_to_event, censor) ~
-                   log_current_assets_by_current_liabilities
-                   + cooperative + nonprofit + other + private
-                   + log_cash_by_current_liabilities
-                   + size_small + size_large + size_v_large
-                   + log_cash_by_total_assets
-                   + tax
-                   + cluster(sector),
-                 data = data)
-fit.AIC <- 2 * 11 - 2 * fit$loglik[2]
-AIC_df <- rbind(AIC_df, list("tax", fit.AIC))
-
-fit <- emfrail(Surv(years_to_event, censor) ~
-                   log_current_assets_by_current_liabilities
-                   + cooperative + nonprofit + other + private
-                   + log_cash_by_current_liabilities
-                   + size_small + size_large + size_v_large
-                   + log_cash_by_total_assets
-                   + financial_expenses_by_total_assets
-                   + cluster(sector),
-                 data = data)
-fit.AIC <- 2 * 11 - 2 * fit$loglik[2]
-AIC_df <- rbind(AIC_df, list("financial_expenses_by_total_assets", fit.AIC))
-
-fit <- emfrail(Surv(years_to_event, censor) ~
-                   log_current_assets_by_current_liabilities
-                   + cooperative + nonprofit + other + private
-                   + log_cash_by_current_liabilities
-                   + size_small + size_large + size_v_large
-                   + log_cash_by_total_assets
-                   + EBIT
-                   + cluster(sector),
-                 data = data)
-fit.AIC <- 2 * 11 - 2 * fit$loglik[2]
-AIC_df <- rbind(AIC_df, list("EBIT", fit.AIC))
-
-fit <- emfrail(Surv(years_to_event, censor) ~
-                   log_current_assets_by_current_liabilities
-                   + cooperative + nonprofit + other + private
-                   + log_cash_by_current_liabilities
-                   + size_small + size_large + size_v_large
-                   + log_cash_by_total_assets
-                   + working_capital_by_total_assets
-                   + cluster(sector),
-                 data = data)
-fit.AIC <- 2 * 11 - 2 * fit$loglik[2]
-AIC_df <- rbind(AIC_df, list("working_capital_by_total_assets", fit.AIC))
-
-fit <- emfrail(Surv(years_to_event, censor) ~
-                   log_current_assets_by_current_liabilities
-                   + cooperative + nonprofit + other + private
-                   + log_cash_by_current_liabilities
-                   + size_small + size_large + size_v_large
-                   + log_cash_by_total_assets
-                   + income_tax_by_total_assets
-                   + cluster(sector),
-                 data = data)
-fit.AIC <- 2 * 11 - 2 * fit$loglik[2]
-AIC_df <- rbind(AIC_df, list("income_tax_by_total_assets", fit.AIC))
-
-fit <- emfrail(Surv(years_to_event, censor) ~
-                   log_current_assets_by_current_liabilities
-                   + cooperative + nonprofit + other + private
-                   + log_cash_by_current_liabilities
-                   + size_small + size_large + size_v_large
-                   + log_cash_by_total_assets
-                   + EBITDA
-                   + cluster(sector),
-                 data = data)
-fit.AIC <- 2 * 11 - 2 * fit$loglik[2]
-AIC_df <- rbind(AIC_df, list("EBITDA", fit.AIC))
-
-AIC_df
-#                                 Variable AIC
-# 1 transf_total_liabilities_by_net_assets 51256.10
-# 2                                    tax 51191.90 <-
-# 3     financial_expenses_by_total_assets 51248.87
-# 4                                   EBIT 51258.06
-# 5        working_capital_by_total_assets 51254.83
-# 6             income_tax_by_total_assets 51257.18
-# 7                                 EBITDA 51257.71
-
-# Iteration 7
-AIC_df = data.frame()
-fit <- emfrail(Surv(years_to_event, censor) ~
-                   log_current_assets_by_current_liabilities
-                   + cooperative + nonprofit + other + private
-                   + log_cash_by_current_liabilities
-                   + size_small + size_large + size_v_large
-                   + log_cash_by_total_assets
-                   + tax
-                   + transf_total_liabilities_by_net_assets
-                   + cluster(sector),
-                 data = data)
-fit.AIC <- 2 * 12 - 2 * fit$loglik[2]
-AIC_df <- rbind(AIC_df, list("transf_total_liabilities_by_net_assets", fit.AIC))
-names(AIC_df) <- c("Variable", "AIC")
-
-fit <- emfrail(Surv(years_to_event, censor) ~
-                   log_current_assets_by_current_liabilities
-                   + cooperative + nonprofit + other + private
-                   + log_cash_by_current_liabilities
-                   + size_small + size_large + size_v_large
-                   + log_cash_by_total_assets
-                   + tax
-                   + financial_expenses_by_total_assets
-                   + cluster(sector),
-                 data = data)
-fit.AIC <- 2 * 12 - 2 * fit$loglik[2]
-AIC_df <- rbind(AIC_df, list("financial_expenses_by_total_assets", fit.AIC))
-
-fit <- emfrail(Surv(years_to_event, censor) ~
-                   log_current_assets_by_current_liabilities
-                   + cooperative + nonprofit + other + private
-                   + log_cash_by_current_liabilities
-                   + size_small + size_large + size_v_large
-                   + log_cash_by_total_assets
-                   + tax
-                   + EBIT
-                   + cluster(sector),
-                 data = data)
-fit.AIC <- 2 * 12 - 2 * fit$loglik[2]
-AIC_df <- rbind(AIC_df, list("EBIT", fit.AIC))
-
-fit <- emfrail(Surv(years_to_event, censor) ~
-                   log_current_assets_by_current_liabilities
-                   + cooperative + nonprofit + other + private
-                   + log_cash_by_current_liabilities
-                   + size_small + size_large + size_v_large
-                   + log_cash_by_total_assets
-                   + tax
-                   + working_capital_by_total_assets
-                   + cluster(sector),
-                 data = data)
-fit.AIC <- 2 * 12 - 2 * fit$loglik[2]
-AIC_df <- rbind(AIC_df, list("working_capital_by_total_assets", fit.AIC))
-
-fit <- emfrail(Surv(years_to_event, censor) ~
-                   log_current_assets_by_current_liabilities
-                   + cooperative + nonprofit + other + private
-                   + log_cash_by_current_liabilities
-                   + size_small + size_large + size_v_large
-                   + log_cash_by_total_assets
-                   + tax
-                   + income_tax_by_total_assets
-                   + cluster(sector),
-                 data = data)
-fit.AIC <- 2 * 12 - 2 * fit$loglik[2]
-AIC_df <- rbind(AIC_df, list("income_tax_by_total_assets", fit.AIC))
-
-fit <- emfrail(Surv(years_to_event, censor) ~
-                   log_current_assets_by_current_liabilities
-                   + cooperative + nonprofit + other + private
-                   + log_cash_by_current_liabilities
-                   + size_small + size_large + size_v_large
-                   + log_cash_by_total_assets
-                   + tax
-                   + EBITDA
-                   + cluster(sector),
-                 data = data)
-fit.AIC <- 2 * 12 - 2 * fit$loglik[2]
-AIC_df <- rbind(AIC_df, list("EBITDA", fit.AIC))
-
-AIC_df
-#                                 Variable AIC
-# 1 transf_total_liabilities_by_net_assets 51191.76
-# 2     financial_expenses_by_total_assets 51184.92 <-
-# 3                                   EBIT 51191.64
-# 4        working_capital_by_total_assets 51191.46
-# 5             income_tax_by_total_assets 51187.42
-# 6                                 EBITDA 51188.70
-
-# Iteration 8
-AIC_df = data.frame()
-fit <- emfrail(Surv(years_to_event, censor) ~
-                   log_current_assets_by_current_liabilities
-                   + cooperative + nonprofit + other + private
-                   + log_cash_by_current_liabilities
-                   + size_small + size_large + size_v_large
-                   + log_cash_by_total_assets
-                   + tax
-                   + financial_expenses_by_total_assets
-                   + transf_total_liabilities_by_net_assets
-                   + cluster(sector),
-                 data = data)
-fit.AIC <- 2 * 13 - 2 * fit$loglik[2]
-AIC_df <- rbind(AIC_df, list("transf_total_liabilities_by_net_assets", fit.AIC))
-names(AIC_df) <- c("Variable", "AIC")
-
-fit <- emfrail(Surv(years_to_event, censor) ~
-                   log_current_assets_by_current_liabilities
-                   + cooperative + nonprofit + other + private
-                   + log_cash_by_current_liabilities
-                   + size_small + size_large + size_v_large
-                   + log_cash_by_total_assets
-                   + tax
-                   + financial_expenses_by_total_assets
-                   + EBIT
-                   + cluster(sector),
-                 data = data)
-fit.AIC <- 2 * 13 - 2 * fit$loglik[2]
-AIC_df <- rbind(AIC_df, list("EBIT", fit.AIC))
-
-fit <- emfrail(Surv(years_to_event, censor) ~
-                   log_current_assets_by_current_liabilities
-                   + cooperative + nonprofit + other + private
-                   + log_cash_by_current_liabilities
-                   + size_small + size_large + size_v_large
-                   + log_cash_by_total_assets
-                   + tax
-                   + financial_expenses_by_total_assets
-                   + working_capital_by_total_assets
-                   + cluster(sector),
-                 data = data)
-fit.AIC <- 2 * 13 - 2 * fit$loglik[2]
-AIC_df <- rbind(AIC_df, list("working_capital_by_total_assets", fit.AIC))
-
-fit <- emfrail(Surv(years_to_event, censor) ~
-                   log_current_assets_by_current_liabilities
-                   + cooperative + nonprofit + other + private
-                   + log_cash_by_current_liabilities
-                   + size_small + size_large + size_v_large
-                   + log_cash_by_total_assets
-                   + tax
-                   + financial_expenses_by_total_assets
-                   + income_tax_by_total_assets
-                   + cluster(sector),
-                 data = data)
-fit.AIC <- 2 * 13 - 2 * fit$loglik[2]
-AIC_df <- rbind(AIC_df, list("income_tax_by_total_assets", fit.AIC))
-
-fit <- emfrail(Surv(years_to_event, censor) ~
-                   log_current_assets_by_current_liabilities
-                   + cooperative + nonprofit + other + private
-                   + log_cash_by_current_liabilities
-                   + size_small + size_large + size_v_large
-                   + log_cash_by_total_assets
-                   + tax
-                   + financial_expenses_by_total_assets
-                   + EBITDA
-                   + cluster(sector),
-                 data = data)
-fit.AIC <- 2 * 13 - 2 * fit$loglik[2]
-AIC_df <- rbind(AIC_df, list("EBITDA", fit.AIC))
-
-AIC_df
-#                                 Variable AIC
-# 1 transf_total_liabilities_by_net_assets 51184.83
-# 2                                   EBIT 51184.72
-# 3        working_capital_by_total_assets 51185.03
-# 4             income_tax_by_total_assets 51178.26
-# 5                                 EBITDA 51181.80 <-
-
-# Iteration 9
-AIC_df = data.frame()
-fit <- emfrail(Surv(years_to_event, censor) ~
-                   log_current_assets_by_current_liabilities
-                   + cooperative + nonprofit + other + private
-                   + log_cash_by_current_liabilities
-                   + size_small + size_large + size_v_large
-                   + log_cash_by_total_assets
-                   + tax
-                   + financial_expenses_by_total_assets
-                   + EBITDA
-                   + transf_total_liabilities_by_net_assets
-                   + cluster(sector),
-                 data = data)
-fit.AIC <- 2 * 14 - 2 * fit$loglik[2]
-AIC_df <- rbind(AIC_df, list("transf_total_liabilities_by_net_assets", fit.AIC))
-names(AIC_df) <- c("Variable", "AIC")
-
-fit <- emfrail(Surv(years_to_event, censor) ~
-                   log_current_assets_by_current_liabilities
-                   + cooperative + nonprofit + other + private
-                   + log_cash_by_current_liabilities
-                   + size_small + size_large + size_v_large
-                   + log_cash_by_total_assets
-                   + tax
-                   + financial_expenses_by_total_assets
-                   + EBITDA
-                   + EBIT
-                   + cluster(sector),
-                 data = data)
-fit.AIC <- 2 * 14 - 2 * fit$loglik[2]
-AIC_df <- rbind(AIC_df, list("EBIT", fit.AIC))
-
-fit <- emfrail(Surv(years_to_event, censor) ~
-                   log_current_assets_by_current_liabilities
-                   + cooperative + nonprofit + other + private
-                   + log_cash_by_current_liabilities
-                   + size_small + size_large + size_v_large
-                   + log_cash_by_total_assets
-                   + tax
-                   + financial_expenses_by_total_assets
-                   + EBITDA
-                   + working_capital_by_total_assets
-                   + cluster(sector),
-                 data = data)
-fit.AIC <- 2 * 14 - 2 * fit$loglik[2]
-AIC_df <- rbind(AIC_df, list("working_capital_by_total_assets", fit.AIC))
-
-fit <- emfrail(Surv(years_to_event, censor) ~
-                   log_current_assets_by_current_liabilities
-                   + cooperative + nonprofit + other + private
-                   + log_cash_by_current_liabilities
-                   + size_small + size_large + size_v_large
-                   + log_cash_by_total_assets
-                   + tax
-                   + financial_expenses_by_total_assets
-                   + EBITDA
-                   + income_tax_by_total_assets
-                   + cluster(sector),
-                 data = data)
-fit.AIC <- 2 * 14 - 2 * fit$loglik[2]
-AIC_df <- rbind(AIC_df, list("income_tax_by_total_assets", fit.AIC))
-  
-AIC_df
-#                                 Variable AIC
-# 1 transf_total_liabilities_by_net_assets 51181.74
-# 2                                   EBIT 51183.36
-# 3        working_capital_by_total_assets 51182.01
-# 4             income_tax_by_total_assets 51174.75 <-
-
-# Iteration 10
-AIC_df = data.frame()
-fit <- emfrail(Surv(years_to_event, censor) ~
-                   log_current_assets_by_current_liabilities
-                   + cooperative + nonprofit + other + private
-                   + log_cash_by_current_liabilities
-                   + size_small + size_large + size_v_large
-                   + log_cash_by_total_assets
-                   + tax
-                   + financial_expenses_by_total_assets
-                   + EBITDA
-                   + income_tax_by_total_assets
-                   + transf_total_liabilities_by_net_assets
-                   + cluster(sector),
-                 data = data)
-fit.AIC <- 2 * 15 - 2 * fit$loglik[2]
-AIC_df <- rbind(AIC_df, list("transf_total_liabilities_by_net_assets", fit.AIC))
-names(AIC_df) <- c("Variable", "AIC")
-
-fit <- emfrail(Surv(years_to_event, censor) ~
-                   log_current_assets_by_current_liabilities
-                   + cooperative + nonprofit + other + private
-                   + log_cash_by_current_liabilities
-                   + size_small + size_large + size_v_large
-                   + log_cash_by_total_assets
-                   + tax
-                   + financial_expenses_by_total_assets
-                   + EBITDA
-                   + income_tax_by_total_assets
-                   + EBIT
-                   + cluster(sector),
-                 data = data)
-fit.AIC <- 2 * 15 - 2 * fit$loglik[2]
-AIC_df <- rbind(AIC_df, list("EBIT", fit.AIC))
-
-fit <- emfrail(Surv(years_to_event, censor) ~
-                   log_current_assets_by_current_liabilities
-                   + cooperative + nonprofit + other + private
-                   + log_cash_by_current_liabilities
-                   + size_small + size_large + size_v_large
-                   + log_cash_by_total_assets
-                   + tax
-                   + financial_expenses_by_total_assets
-                   + EBITDA
-                   + income_tax_by_total_assets
-                   + working_capital_by_total_assets
-                   + cluster(sector),
-                 data = data)
-fit.AIC <- 2 * 15 - 2 * fit$loglik[2]
-AIC_df <- rbind(AIC_df, list("working_capital_by_total_assets", fit.AIC))
-  
-AIC_df
-#                                 Variable AIC
-# 1 transf_total_liabilities_by_net_assets 51174.71 <-
-# 2                                   EBIT 51176.18
-# 3        working_capital_by_total_assets 51175.19
-
-# Iteration 11
-AIC_df = data.frame()
-fit <- emfrail(Surv(years_to_event, censor) ~
-                   log_current_assets_by_current_liabilities
-                   + cooperative + nonprofit + other + private
-                   + log_cash_by_current_liabilities
-                   + size_small + size_large + size_v_large
-                   + log_cash_by_total_assets
-                   + tax
-                   + financial_expenses_by_total_assets
-                   + EBITDA
-                   + income_tax_by_total_assets
-                   + transf_total_liabilities_by_net_assets
-                   + EBIT
-                   + cluster(sector),
-                 data = data)
-fit.AIC <- 2 * 16 - 2 * fit$loglik[2]
-AIC_df <- rbind(AIC_df, list("EBIT", fit.AIC))
-names(AIC_df) <- c("Variable", "AIC")
-
-fit <- emfrail(Surv(years_to_event, censor) ~
-                   log_current_assets_by_current_liabilities
-                   + cooperative + nonprofit + other + private
-                   + log_cash_by_current_liabilities
-                   + size_small + size_large + size_v_large
-                   + log_cash_by_total_assets
-                   + tax
-                   + financial_expenses_by_total_assets
-                   + EBITDA
-                   + income_tax_by_total_assets
-                   + transf_total_liabilities_by_net_assets
-                   + working_capital_by_total_assets
-                   + cluster(sector),
-                 data = data)
-fit.AIC <- 2 * 16 - 2 * fit$loglik[2]
-AIC_df <- rbind(AIC_df, list("working_capital_by_total_assets", fit.AIC))
-
-AIC_df
-#                          Variable AIC
-# 1                            EBIT 51176.18
-# 2 working_capital_by_total_assets 51175.21
 
 # --- The model
 fit <- emfrail(Surv(years_to_event, censor) ~
