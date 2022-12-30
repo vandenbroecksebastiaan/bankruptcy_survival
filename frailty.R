@@ -3,6 +3,8 @@ library(survival)
 library(frailtySurv)
 library(frailtyEM)
 library(ggstatsplot)
+library(ggplot2)
+library(parfm)
 options(scipen = 999)
 rm(list=ls())
 
@@ -14,6 +16,9 @@ data <- na.omit(data)
 
 # Events other than bankruptcy are considered censored
 data$censor <- ifelse(data$event_indicator == 2, 1, 0)
+data$censor_total <- ifelse(data$status=="alive", 1, 0)
+data$censor_liq <- ifelse(data$event_indicator == 4, 1, 0)
+data$censor_mer <- ifelse(data$event_indicator == 0, 1, 0)
 
 # Make dummies for the size classification relative to medium sized companies
 data$size_small <- ifelse(data$size_classification == "Small", 1, 0)
@@ -106,8 +111,8 @@ data$log_tax <- replace(
 )
 
 # Truncate extreme outliers
-upper_bound <- quantile(data$tax, probs=c(0.25)) + 10 * IQR(data$tax)
-lower_bound <- quantile(data$tax, probs=c(0.75)) - 10 * IQR(data$tax)
+upper_bound <- quantile(data$tax, probs=c(0.50)) + 10 * IQR(data$tax)
+lower_bound <- quantile(data$tax, probs=c(0.50)) - 10 * IQR(data$tax)
 data$trunc_tax <- ifelse(data$tax > upper_bound, upper_bound,
                           ifelse(data$tax < lower_bound, lower_bound, data$tax))
 
@@ -134,8 +139,8 @@ data$trunc_EBITDA <- ifelse(data$EBITDA > upper_bound, upper_bound,
 
 # ROA
 # Truncate extreme outliers
-upper_bound <- quantile(data$roa, probs=c(0.25)) + 10 * IQR(data$roa)
-lower_bound <- quantile(data$roa, probs=c(0.75)) - 10 * IQR(data$roa)
+upper_bound <- quantile(data$roa, probs=c(0.5)) + 10 * IQR(data$roa)
+lower_bound <- quantile(data$roa, probs=c(0.5)) - 10 * IQR(data$roa)
 data$trunc_roa <- ifelse(data$roa > upper_bound, upper_bound,
                           ifelse(data$roa < lower_bound, lower_bound, data$roa))
 
@@ -252,8 +257,9 @@ data <- data %>%
 # --- Make visualizations of the continuous variables
 # total_liabilities
 jpeg(file = "visualizations/total_liabilities.jpeg",
-     width = 3000, height = 3000, res = 300)
+     width = 3000, height = 3000, res = 400)
 par(mfrow=c(2, 2))
+par(family="Times")
 hist(data$total_liabilities, breaks=50,
      main="total_liabilities")
 hist(data$log_total_liabilities, breaks=50,
@@ -266,12 +272,14 @@ dev.off()
 
 # cash_by_total_assets
 jpeg(file = "visualizations/cash_by_total_assets.jpeg",
-     width = 3000, height = 3000, res = 300)
+     width = 3000, height = 3000, res = 400)
 par(mfrow=c(2, 2))
+par(mar=c(2, 2, 2, 2))
+par(family="Times")
 hist(data$cash_by_total_assets, breaks=50,
-     main="cash_by_total_assets")
+     main="cash_by_total_assets", ylab="frequency")
 hist(data$log_cash_by_total_assets, breaks=50,
-     main="log(cash_by_total_assets)")
+     main="log(cash_by_total_assets)", ylab="frequency")
 boxplot(data$cash_by_total_assets,
      main="cash_by_total_assets")
 boxplot(data$log_cash_by_total_assets,
@@ -280,13 +288,14 @@ dev.off()
 
 # cash_by_current_liabilities
 jpeg(file = "visualizations/cash_by_current_liabilities.jpeg",
-     width = 3000, height = 3000, res = 300)
+     width = 3000, height = 3000, res = 400)
 par(mfrow=c(2, 2))
 par(mar=c(2, 2, 2, 2))
+par(family="Times")
 hist(data$cash_by_current_liabilities, breaks=50,
-     main="cash_by_current_liabilities")
+     main="cash_by_current_liabilities", ylab="frequency")
 hist(data$log_cash_by_current_liabilities, breaks=50,
-     main="log(cash_by_current_liabilities)")
+     main="log(cash_by_current_liabilities)", ylab="frequency")
 boxplot(data$cash_by_current_liabilities,
      main="cash_by_current_liabilities")
 boxplot(data$log_cash_by_current_liabilities,
@@ -295,9 +304,10 @@ dev.off()
 
 # current_assets_by_current_liabilities
 jpeg(file = "visualizations/current_assets_by_current_liabilities.jpeg",
-     width = 3000, height = 3000, res = 300)
+     width = 3000, height = 3000, res = 400)
 par(mfrow=c(2, 2))
 par(mar=c(3, 3, 3, 3))
+par(family="Times")
 hist(data$current_assets_by_current_liabilities, breaks=50,
      main="current_assets_by_current_liabilities")
 hist(data$log_current_assets_by_current_liabilities, breaks=50,
@@ -310,9 +320,10 @@ dev.off()
 
 # tax
 jpeg(file = "visualizations/tax.jpeg",
-     width = 3000, height = 3000, res = 300)
+     width = 4500, height = 3000, res = 400)
 par(mfrow=c(2, 3))
 par(mar=c(3, 3, 3, 3))
+par(family="Times")
 hist(data$tax, breaks=50,
      main="tax")
 hist(data$log_tax, breaks=50,
@@ -329,9 +340,10 @@ dev.off()
 
 # EBITDA
 jpeg(file = "visualizations/EBITDA.jpeg",
-     width = 3000, height = 3000, res = 300)
+     width = 4500, height = 3000, res = 400)
 par(mfrow=c(2, 3))
 par(mar=c(3, 3, 3, 3))
+par(family="Times")
 hist(data$EBITDA, breaks=50,
      main="EBITDA")
 hist(data$log_EBITDA, breaks=50,
@@ -348,9 +360,10 @@ dev.off()
 
 # ROA
 jpeg(file = "visualizations/roa.jpeg",
-     width = 3000, height = 3000, res = 300)
+     width = 3000, height = 3000, res = 400)
 par(mfrow=c(2, 2))
 par(mar=c(3, 3, 3, 3))
+par(family="Times")
 hist(data$roa, breaks=50,
      main="roa")
 hist(data$trunc_roa, breaks=50,
@@ -363,9 +376,10 @@ dev.off()
 
 # financial_expenses_by_total_assets
 jpeg(file = "visualizations/financial_expenses_by_total_assets.jpeg",
-     width = 3000, height = 3000, res = 300)
+     width = 4500, height = 3000, res = 400)
 par(mfrow=c(2, 3))
 par(mar=c(3, 3, 3, 3))
+par(family="Times")
 hist(data$financial_expenses_by_total_assets, breaks=50,
      main="financial_expenses_by_total_assets")
 hist(data$log_financial_expenses_by_total_assets, breaks=50,
@@ -382,9 +396,10 @@ dev.off()
 
 # EBIT
 jpeg(file = "visualizations/EBIT.jpeg",
-     width = 3000, height = 3000, res = 300)
+     width = 4500, height = 3000, res = 400)
 par(mfrow=c(2, 3))
 par(mar=c(3, 3, 3, 3))
+par(family="Times")
 hist(data$EBIT, breaks=50,
      main="EBIT")
 hist(data$log_EBIT, breaks=50,
@@ -401,9 +416,10 @@ dev.off()
 
 # current_liabilities_by_total_liabilities
 jpeg(file = "visualizations/current_liabilities_by_total_liabilities.jpeg",
-     width = 3000, height = 3000, res = 300)
+     width = 3000, height = 3000, res = 400)
 par(mfrow=c(2, 2))
 par(mar=c(3, 3, 3, 3))
+par(family="Times")
 hist(data$current_liabilites_by_total_liabilities, breaks=50,
      main="current_liabilities_by_total_liabilities")
 hist(data$log_current_liabilities_by_total_liabilities, breaks=50,
@@ -416,9 +432,10 @@ dev.off()
 
 # working_capital_by_total_assets
 jpeg(file = "visualizations/working_capital_by_total_assets.jpeg",
-     width = 3000, height = 3000, res = 300)
+     width = 4500, height = 3000, res = 400)
 par(mfrow=c(2, 3))
 par(mar=c(3, 3, 3, 3))
+par(family="Times")
 hist(data$working_capital_by_total_assets, breaks=50,
      main="working_capital_by_total_assets")
 hist(data$log_working_capital_by_total_assets, breaks=50,
@@ -435,17 +452,19 @@ dev.off()
 
 # Size classification
 jpeg(file = "visualizations/size_classification.jpeg",
-     width = 3000, height = 3000, res = 300)
+     width = 3000, height = 3000, res = 400)
 par(mfrow=c(1, 1))
 par(mar=c(3, 3, 3, 3))
-barplot(table(data$size_classification))
+par(family="Times")
+barplot(table(data$size_classification), main = "Size classification")
 dev.off()
 
 # income_tax_by_total_assets
 jpeg(file = "visualizations/income_tax_by_total_assets.jpeg",
-     width = 3000, height = 3000, res = 300)
+     width = 4500, height = 3000, res = 400)
 par(mfrow=c(2, 3))
 par(mar=c(3, 3, 3, 3))
+par(family="Times")
 hist(data$income_tax_by_total_assets, breaks=50,
      main="income_tax_by_total_assets")
 hist(data$log_income_tax_by_total_assets, breaks=50,
@@ -462,9 +481,10 @@ dev.off()
 
 # n_employees
 jpeg(file = "visualizations/n_employees.jpeg",
-     width = 3000, height = 3000, res = 300)
+     width = 3000, height = 3000, res = 400)
 par(mfrow=c(2, 2))
 par(mar=c(3, 3, 3, 3))
+par(family="Times")
 hist(data$n_employees, breaks=50,
      main="n_employees")
 hist(data$log_n_employees, breaks=50,
@@ -474,6 +494,126 @@ boxplot(data$n_employees,
 boxplot(data$log_n_employees,
         main="log(n_employees)")
 dev.off()
+
+# Kaplan-Meier estimator
+jpeg(file = "visualizations/KM_estimator.jpeg",
+     width = 3000, height = 3000, res = 400)
+par(mfrow=c(2, 2))
+par(mar=c(4, 4, 4, 4))
+par(family="Times")
+plot(survfit(Surv(years_to_event, censor_total) ~ 1, data=data),
+     main="All causes confounded", xlab="Years to event", ylab="KM estimator")
+plot(survfit(Surv(years_to_event, censor_mer) ~ 1, data=data),
+     main="Main event = merger", xlab="Years to event", ylab="KM estimator")
+plot(survfit(Surv(years_to_event, censor_liq) ~ 1, data=data),
+     main="Main event = liquidation", xlab="Years to event", ylab="KM estimator")
+plot(survfit(Surv(years_to_event, censor) ~ 1, data=data),
+     main="Main event = bankruptcy", xlab="Years to event", ylab="KM estimator")
+dev.off()
+
+# Sector clusters
+jpeg(file = "visualizations/sector.jpeg",
+     width = 4000, height = 3000, res = 400)
+par(mfrow=c(1, 1))
+par(mar=c(3, 30, 3, 3))
+par(family="Times")
+data$sector <- replace(data$sector, data$sector=="T - Activities of households as employers; undifferentiated goods- and services-producing activities of households for own use", "T - Activities of households as employers")
+barplot(sort(table(data$sector), decreasing = T), las=2, horiz=T)
+dev.off()
+
+# Event types
+jpeg(file = "visualizations/event.jpeg",
+     width = 4000, height = 3000, res = 400)
+par(mfrow=c(1, 1))
+par(mar=c(3, 20, 3, 3))
+par(family="Times")
+data$status <- replace(data$status, data$status=="alive", "Alive")
+barplot(sort(table(data$status), decreasing = T), las=2,
+        horiz=T, xlim=c(0, 20000), beside=T)
+dev.off()
+
+# Histogram of survival times
+jpeg(file = "visualizations/survival_time.jpeg",
+     width = 3000, height = 3000, res = 400)
+par(mfrow=c(1, 1))
+par(mar=c(3, 3, 3, 3))
+par(family="Times")
+hist(data$years_to_event, main="Years to event", breaks=50)
+dev.off()
+
+# Correlation plot
+cor.mat <- cor(matrix(c(
+  data$log_cash_by_total_assets,
+  data$log_cash_by_current_liabilities,
+  data$log_current_assets_by_current_liabilities,
+  data$trunc_tax,
+  data$trunc_EBITDA,
+  data$trunc_roa,
+  data$trunc_financial_expenses_by_total_assets,
+  data$trunc_EBIT,
+  data$log_current_liabilities_by_total_liabilities,
+  data$trunc_working_capital_by_total_assets,
+  data$log_income_tax_by_total_assets,
+  data$log_n_employees), nrow=28135)
+)
+cor.mat <- round(cor.mat, 4)
+cor.mat <- as.data.frame(cor.mat)
+rownames(cor.mat) <- c(
+ "1 log_cash_by_total_assets",
+ "2 log_cash_by_current_liabilities",
+ "3 log_current_assets_by_current_liabilities",
+ "4 trunc_tax",
+ "5 trunc_EBITDA",
+ "6 trunc_roa",
+ "7 trunc_financial_expenses_by_total_assets",
+ "8 trunc_EBIT",
+ "9 log_current_liabilities_by_total_liabilities",
+ "10 trunc_working_capital_by_total_assets",
+ "11 log_income_tax_by_total_assets",
+ "12 log_n_employees"
+)
+colnames(cor.mat) <- c(
+ "1",
+ "2",
+ "3",
+ "4",
+ "5",
+ "6",
+ "7",
+ "8",
+ "9",
+ "10",
+ "11",
+ "12"
+)
+cor.mat
+#                                                      1       2       3       4       5       6       7       8
+# 1 log_cash_by_total_assets                      1.0000  0.8921  0.2940  0.0049 -0.0455  0.1337 -0.1380  0.0335
+# 2 log_cash_by_current_liabilities               0.8921  1.0000  0.5940  0.0572  0.0109  0.2376 -0.2707  0.0818
+# 3 log_current_assets_by_current_liabilities     0.2940  0.5940  1.0000  0.1633  0.0819  0.2782 -0.3359  0.1401
+# 4 trunc_tax                                     0.0049  0.0572  0.1633  1.0000  0.7125  0.2189 -0.1431  0.7249
+# 5 trunc_EBITDA                                 -0.0455  0.0109  0.0819  0.7125  1.0000  0.2733 -0.1288  0.8756
+# 6 trunc_roa                                     0.1337  0.2376  0.2782  0.2189  0.2733  1.0000 -0.3075  0.3599
+# 7 trunc_financial_expenses_by_total_assets     -0.1380 -0.2707 -0.3359 -0.1431 -0.1288 -0.3075  1.0000 -0.1386
+# 8 trunc_EBIT                                    0.0335  0.0818  0.1401  0.7249  0.8756  0.3599 -0.1386  1.0000
+# 9 log_current_liabilities_by_total_liabilities -0.0889 -0.5200 -0.7440 -0.1239 -0.1237 -0.2756  0.3486 -0.1202
+# 10 trunc_working_capital_by_total_assets       -0.1162 -0.0625  0.2525  0.0400  0.0595  0.1061 -0.1318  0.0763
+# 11 log_income_tax_by_total_assets               0.1678  0.2205  0.2522  0.2863  0.1756  0.3840 -0.1998  0.2557
+# 12 log_n_employees                             -0.0963 -0.1326 -0.0613  0.4076  0.4565  0.0289 -0.0581  0.3148
+# 9      10      11      12
+# 1 log_cash_by_total_assets                     -0.0889 -0.1162  0.1678 -0.0963
+# 2 log_cash_by_current_liabilities              -0.5200 -0.0625  0.2205 -0.1326
+# 3 log_current_assets_by_current_liabilities    -0.7440  0.2525  0.2522 -0.0613
+# 4 trunc_tax                                    -0.1239  0.0400  0.2863  0.4076
+# 5 trunc_EBITDA                                 -0.1237  0.0595  0.1756  0.4565
+# 6 trunc_roa                                    -0.2756  0.1061  0.3840  0.0289
+# 7 trunc_financial_expenses_by_total_assets      0.3486 -0.1318 -0.1998 -0.0581
+# 8 trunc_EBIT                                   -0.1202  0.0763  0.2557  0.3148
+# 9 log_current_liabilities_by_total_liabilities  1.0000 -0.0958 -0.1584  0.0911
+# 10 trunc_working_capital_by_total_assets       -0.0958  1.0000  0.0892  0.0603
+# 11 log_income_tax_by_total_assets              -0.1584  0.0892  1.0000  0.0143
+# 12 log_n_employees                              0.0911  0.0603  0.0143  1.0000
+
 
 # --- Stepwise variable selection using AIC
 
@@ -559,8 +699,10 @@ fit.1 <- emfrail(Surv(years_to_event, censor) ~
                    log_current_liabilities_by_total_liabilities
                    + cluster(sector),
                  data = data)
-fit.1.AIC <- 2 * 1 - 2 * fit$loglik[2]
+fit.1.AIC <- 2 * 1 - 2 * fit.1$loglik[2]
 AIC_df <- rbind(AIC_df, list("log_current_liabilities_by_total_liabilities", "Iteration 1", fit.1.AIC))
+frailty_df <- rbind(frailty_df, fit.1$frail)
+names(frailty_df) <- names(fit.1$frail)
 
 fit <- emfrail(Surv(years_to_event, censor) ~
                    trunc_working_capital_by_total_assets
@@ -639,13 +781,14 @@ fit <- emfrail(Surv(years_to_event, censor) ~
 fit.AIC <- 2 * 2 - 2 * fit$loglik[2]
 AIC_df <- rbind(AIC_df, list("log_current_assets_by_current_liabilities", "Iteration 2", fit.AIC))
 
-fit <- emfrail(Surv(years_to_event, censor) ~
+fit.2 <- emfrail(Surv(years_to_event, censor) ~
                    log_current_liabilities_by_total_liabilities
                    + trunc_tax
                    + cluster(sector),
                  data = data)
-fit.AIC <- 2 * 2 - 2 * fit$loglik[2]
-AIC_df <- rbind(AIC_df, list("trunc_tax", "Iteration 2", fit.AIC))
+fit.2.AIC <- 2 * 2 - 2 * fit.2$loglik[2]
+AIC_df <- rbind(AIC_df, list("trunc_tax", "Iteration 2", fit.2.AIC))
+frailty_df <- rbind(frailty_df, fit.2$frail)
 
 fit <- emfrail(Surv(years_to_event, censor) ~
                    log_current_liabilities_by_total_liabilities
@@ -745,14 +888,15 @@ fit <- emfrail(Surv(years_to_event, censor) ~
 fit.AIC <- 2 * 3 - 2 * fit$loglik[2]
 AIC_df <- rbind(AIC_df, list("log_cash_by_total_assets", "Iteration 3", fit.AIC))
 
-fit <- emfrail(Surv(years_to_event, censor) ~
+fit.3 <- emfrail(Surv(years_to_event, censor) ~
                    log_current_liabilities_by_total_liabilities
                    + trunc_tax
                    + log_cash_by_current_liabilities
                    + cluster(sector),
                  data = data)
-fit.AIC <- 2 * 3 - 2 * fit$loglik[2]
-AIC_df <- rbind(AIC_df, list("log_cash_by_current_liabilities", "Iteration 3", fit.AIC))
+fit.3.AIC <- 2 * 3 - 2 * fit.3$loglik[2]
+AIC_df <- rbind(AIC_df, list("log_cash_by_current_liabilities", "Iteration 3", fit.3.AIC))
+frailty_df <- rbind(frailty_df, fit.3$frail)
 
 fit <- emfrail(Surv(years_to_event, censor) ~
                    log_current_liabilities_by_total_liabilities
@@ -930,15 +1074,16 @@ fit <- emfrail(Surv(years_to_event, censor) ~
 fit.AIC <- 2 * 4 - 2 * fit$loglik[2]
 AIC_df <- rbind(AIC_df, list("trunc_working_capital_by_total_assets", "Iteration 4", fit.AIC))
 
-fit <- emfrail(Surv(years_to_event, censor) ~
+fit.4 <- emfrail(Surv(years_to_event, censor) ~
                    log_current_liabilities_by_total_liabilities
                    + trunc_tax
                    + log_cash_by_current_liabilities
                    + size_small + size_large + size_v_large
                    + cluster(sector),
                  data = data)
-fit.AIC <- 2 * 6 - 2 * fit$loglik[2]
-AIC_df <- rbind(AIC_df, list("size_dummmies", "Iteration 4", fit.AIC))
+fit.4.AIC <- 2 * 6 - 2 * fit.4$loglik[2]
+AIC_df <- rbind(AIC_df, list("size_dummmies", "Iteration 4", fit.4.AIC))
+frailty_df <- rbind(frailty_df, fit.4$frail)
 
 fit <- emfrail(Surv(years_to_event, censor) ~
                    log_current_liabilities_by_total_liabilities
@@ -1007,7 +1152,7 @@ fit <- emfrail(Surv(years_to_event, censor) ~
 fit.AIC <- 2 * 7 - 2 * fit$loglik[2]
 AIC_df <- rbind(AIC_df, list("log_current_assets_by_current_liabilities", "Iteration 5", fit.AIC))
 
-fit <- emfrail(Surv(years_to_event, censor) ~
+fit.5 <- emfrail(Surv(years_to_event, censor) ~
                    log_current_liabilities_by_total_liabilities
                    + trunc_tax
                    + log_cash_by_current_liabilities
@@ -1015,8 +1160,9 @@ fit <- emfrail(Surv(years_to_event, censor) ~
                    + trunc_EBITDA
                    + cluster(sector),
                  data = data)
-fit.AIC <- 2 * 7 - 2 * fit$loglik[2]
-AIC_df <- rbind(AIC_df, list("trunc_EBITDA", "Iteration 5", fit.AIC))
+fit.5.AIC <- 2 * 7 - 2 * fit.5$loglik[2]
+AIC_df <- rbind(AIC_df, list("trunc_EBITDA", "Iteration 5", fit.5.AIC))
+frailty_df <- rbind(frailty_df, fit.5$frail)
 
 fit <- emfrail(Surv(years_to_event, censor) ~
                    log_current_liabilities_by_total_liabilities
@@ -1205,7 +1351,7 @@ fit <- emfrail(Surv(years_to_event, censor) ~
 fit.AIC <- 2 * 8 - 2 * fit$loglik[2]
 AIC_df <- rbind(AIC_df, list("log_n_employees", "Iteration 6", fit.AIC))
 
-fit <- emfrail(Surv(years_to_event, censor) ~
+fit.6 <- emfrail(Surv(years_to_event, censor) ~
                    log_current_liabilities_by_total_liabilities
                    + trunc_tax
                    + log_cash_by_current_liabilities
@@ -1214,8 +1360,9 @@ fit <- emfrail(Surv(years_to_event, censor) ~
                    + cooperative + nonprofit + other + private
                    + cluster(sector),
                  data = data)
-fit.AIC <- 2 * 11 - 2 * fit$loglik[2]
-AIC_df <- rbind(AIC_df, list("type_dummies", "Iteration 6", fit.AIC))
+fit.6.AIC <- 2 * 11 - 2 * fit.6$loglik[2]
+AIC_df <- rbind(AIC_df, list("type_dummies", "Iteration 6", fit.6.AIC))
+frailty_df <- rbind(frailty_df, fit.6$frail)
 
 AIC_df[AIC_df$iteration=="Iteration 6",]
 #                                     Variable   iteration      AIC
@@ -1346,16 +1493,7 @@ AIC_df[AIC_df$iteration=="Iteration 7",]
 # 74                           log_n_employees Iteration 7 57083.72
 
 # --- The model
-fit <- emfrail(Surv(years_to_event, censor) ~
-                 log_current_liabilities_by_total_liabilities
-               + trunc_tax
-               + log_cash_by_current_liabilities
-               + size_small + size_large + size_v_large
-               + trunc_EBITDA
-               + cooperative + nonprofit + other + private
-               + cluster(sector),
-               data = data)
-fit
+fit.6
 # Call: 
 #   emfrail(formula = Surv(years_to_event, censor) ~ log_current_liabilities_by_total_liabilities + 
 #             trunc_tax + log_cash_by_current_liabilities + size_small + 
@@ -1394,47 +1532,47 @@ fit
 # 
 # Score test for heterogeneity: p-val 0.000000000000000000000000000000000000000000000000000000000000000000000358
 
-fit$frail
-# K - Financial and insurance activities 
-# 0.4011734 
-# Q - Human health and social work activities 
-# 0.5901528 
-# L - Real estate activities 
-# 0.6006089 
-# A - Agriculture, forestry and fishing 
-# 0.6147331 
-# E - Water supply; sewerage, waste management and remediation activities 
-# 0.6752981 
-# M - Professional, scientific and technical activities 
-# 0.6972201 
+fit.6$frail
 # C - Manufacturing 
 # 0.7403557 
 # G - Wholesale and retail trade; repair of motor vehicles and motorcycles 
 # 0.8026844 
-# O - Public administration and defence; compulsory social security 
-# 0.8856265 
-# B - Mining and quarrying 
-# 0.9228458 
-# T - Activities of households as employers; undifferentiated goods- and services-producing activities of households for own use 
-# 0.9848851 
-# P - Education 
-# 1.0149337 
-# D - Electricity, gas, steam and air conditioning supply 
-# 1.0474577 
-# S - Other service activities 
-# 1.1252522 
-# J - Information and communication 
-# 1.1591249 
-# R - Arts, entertainment and recreation 
-# 1.1912897 
-# N - Administrative and support service activities 
-# 1.2897014 
-# F - Construction 
-# 1.4069089 
 # H - Transportation and storage 
 # 1.6875412 
+# J - Information and communication 
+# 1.1591249 
+# M - Professional, scientific and technical activities 
+# 0.6972201 
+# D - Electricity, gas, steam and air conditioning supply 
+# 1.0474577 
+# L - Real estate activities 
+# 0.6006089 
+# F - Construction 
+# 1.4069089 
+# T - Activities of households as employers; undifferentiated goods- and services-producing activities of households for own use 
+# 0.9848851 
+# N - Administrative and support service activities 
+# 1.2897014 
+# E - Water supply; sewerage, waste management and remediation activities 
+# 0.6752981 
+# Q - Human health and social work activities 
+# 0.5901528 
+# K - Financial and insurance activities 
+# 0.4011734 
 # I - Accommodation and food service activities 
-# 2.0554311
+# 2.0554311 
+# R - Arts, entertainment and recreation 
+# 1.1912897 
+# P - Education 
+# 1.0149337 
+# O - Public administration and defence; compulsory social security 
+# 0.8856265 
+# S - Other service activities 
+# 1.1252522 
+# A - Agriculture, forestry and fishing 
+# 0.6147331 
+# B - Mining and quarrying 
+# 0.9228458 
 
 table(data$sector)
 # A - Agriculture, forestry and fishing 
@@ -1480,65 +1618,185 @@ table(data$sector)
 
 # --- Other things
 
-# Are the results much more different when using the penalized partial
-# likelihood instead of the marginal likelihood?
+# Check the proportional hazards assumption by including the log of the
+# empirical Bayes frailty estimates
+# First, add a column to the data which indicates the log frailty
+log.frailty.df <- as.data.frame(log(fit.6$frail))
+data <- merge(data, log.frailty.df, by.x="sector", by.y="row.names")
+names(data)[names(data) == "log(fit.6$frail)"] <- "log.frailty"
 
-# Plot log cumulative hazard
-# Public and varying size dummies
-new_data <- data.frame(
-  log_current_assets_by_current_liabilities   = c(1,     1,     1,      1,     1,     1,     1,      1,     1,     1,     1,      1,     1,     1,     1,      1,      1,     1,     1,      1      ),
-  cooperative                                 = c(0,     0,     0,      0,     1,     1,     1,      1,     0,     0,     0,      0,     0,     0,     0,      0,      0,     0,     0,      0      ),     
-  nonprofit                                   = c(0,     0,     0,      0,     0,     0,     0,      0,     1,     1,     1,      1,     0,     0,     0,      0,      0,     0,     0,      0      ),     
-  other                                       = c(0,     0,     0,      0,     0,     0,     0,      0,     0,     0,     0,      0,     1,     1,     1,      1,      0,     0,     0,      0      ),     
-  private                                     = c(0,     0,     0,      0,     0,     0,     0,      0,     0,     0,     0,      0,     0,     0,     0,      0,      1,     1,     1,      1      ),     
-  log_cash_by_current_liabilities             = c(-8,   -8,    -8,     -8,     -8,   -8,    -8,     -8,     -8,   -8,    -8,     -8,     -8,   -8,    -8,     -8,      -8,   -8,    -8,     -8      ),    
-  size_small                                  = c(1,     0,     0,      0,     1,     0,     0,      0,     1,     0,     0,      0,     1,     0,     0,      0,      1,     0,     0,      0      ),     
-  size_large                                  = c(0,     0,     1,      0,     0,     0,     1,      0,     0,     0,     1,      0,     0,     0,     1,      0,      0,     0,     1,      0      ),     
-  size_v_large                                = c(0,     0,     0,      1,     0,     0,     0,      1,     0,     0,     0,      1,     0,     0,     0,      1,      0,     0,     0,      1      ),     
-  log_cash_by_total_assets                    = c(-10,  -10,   -10,    -10,    -10,  -10,   -10,    -10,    -10,  -10,   -10,    -10,    -10,  -10,   -10,    -10,     -10,  -10,   -10,    -10     ),   
-  tax                                         = c(10000, 10000, 10000,  10000, 10000, 10000, 10000,  10000, 10000, 10000, 10000,  10000, 10000, 10000, 10000,  10000,  10000, 10000, 10000,  10000  ), 
-  financial_expenses_by_total_assets          = c(0.1,   0.1,   0.1,    0.1,   0.1,   0.1,   0.1,    0.1,   0.1,   0.1,   0.1,    0.1,   0.1,   0.1,   0.1,    0.1,    0.1,   0.1,   0.1,    0.1    ),   
-  EBITDA                                      = c(0,     0,     0,      0,     0,     0,     0,      0,     0,     0,     0,      0,     0,     0,     0,      0,      0,     0,     0,      0      ),     
-  income_tax_by_total_assets                  = c(0,     0,     0,      0,     0,     0,     0,      0,     0,     0,     0,      0,     0,     0,     0,      0,      0,     0,     0,      0      ),     
-  transf_total_liabilities_by_net_assets      = c(0,     0,     0,      0,     0,     0,     0,      0,     0,     0,     0,      0,     0,     0,     0,      0,      0,     0,     0,      0      )       
-)
+# Error: the system is computationally singular. The matrix of covariates
+# of the final model is full rank, though. We will exclude trunc_EBITDA to
+# circumvent this problem, but it is not a proper solution.
+fit.ph.check <- coxph(Surv(years_to_event, censor) ~
+                        log_current_liabilities_by_total_liabilities
+                        + trunc_tax
+                        + log_cash_by_current_liabilities
+                        + size_small + size_large + size_v_large
+                        # + trunc_EBITDA
+                        + cooperative + nonprofit + other + private
+                        + log.frailty,
+                      data = data)
+ph.check <- cox.zph(fit.ph.check, transform="identity")
+ph.check
+#                                               chisq df      p
+# log_current_liabilities_by_total_liabilities  3.805  1 0.0511
+# trunc_tax                                     0.321  1 0.5711
+# log_cash_by_current_liabilities               6.718  1 0.0095
+# size_small                                    3.399  1 0.0652
+# size_large                                    3.076  1 0.0795
+# size_v_large                                  0.767  1 0.3811
+# cooperative                                   1.314  1 0.2517
+# nonprofit                                     0.167  1 0.6825
+# other                                         1.692  1 0.1933
+# private                                       5.062  1 0.0245
+# log.frailty                                   3.387  1 0.0657
+# GLOBAL                                       23.379 11 0.0156
 
-cum_haz <- predict(fit, type="conditional", quantity="cumhaz",
-                   newdata=new_data)
+# Create a plot
+outer_margin = 0
+inner_margin = 3
+fig_size = 3000
+jpeg(file = "visualizations/schoenfeld_plot.jpeg",
+     width = fig_size, height = fig_size * 4/3, res = 300)
+par(mfrow=c(4, 3))
+par(mar=c(inner_margin-1, inner_margin+1, inner_margin-1, inner_margin-2))
+par(oma=c(outer_margin, outer_margin, outer_margin, outer_margin))
+par(family="Times")
+plot(ph.check, col="blue")
+dev.off()
 
-plot(log(cum_haz[[1]]$cumhaz), col=1, type="S", ylim=c(-10, 1))
-for (i in 2:length(cum_haz)) {
-  lines(log(cum_haz[[i]]$cumhaz), col=i, type="S")
-}
+# Fit a model using a positive stable frailty instead of a gamma frailty
+fit.6.stable <- emfrail(Surv(years_to_event, censor) ~
+                          log_current_liabilities_by_total_liabilities
+                          + trunc_tax
+                          + log_cash_by_current_liabilities
+                          + size_small + size_large + size_v_large
+                          + trunc_EBITDA
+                          + cooperative + nonprofit + other + private
+                          + cluster(sector),
+                        data = data, distribution = emfrail_dist("stable"))
+
+# IPCW Cox model
+# Without frailty
+fit.cox.C <- coxph(Surv(years_to_event, censor==0) ~
+                     log_current_liabilities_by_total_liabilities
+                     + trunc_tax
+                     + log_cash_by_current_liabilities
+                     + size_small + size_large + size_v_large
+                     + trunc_EBITDA
+                     + cooperative + nonprofit + other + private,
+                   data = data)
+S.C <- predict(fit.cox.C, type="survival")
+W.C <- 1 / S.C
+data$W.C <- W.C
+
+fit.cox.IPCW <- coxph(Surv(years_to_event, censor) ~
+                        log_current_liabilities_by_total_liabilities
+                        + trunc_tax
+                        + log_cash_by_current_liabilities
+                        + size_small + size_large + size_v_large
+                        + trunc_EBITDA
+                        + cooperative + nonprofit + other + private,
+                     data = data, weights = W.C)
+fit.cox.IPCW
+# Call:
+#   coxph(formula = Surv(years_to_event, censor) ~ log_current_liabilities_by_total_liabilities + 
+#           trunc_tax + log_cash_by_current_liabilities + size_small + 
+#           size_large + size_v_large + trunc_EBITDA + cooperative + 
+#           nonprofit + other + private, data = data, weights = W.C)
+# 
+#                                                        coef      exp(coef)       se(coef)      robust se
+# log_current_liabilities_by_total_liabilities  0.14232342997  1.15294948666  0.00880572908  0.24284783604
+# trunc_tax                                    -0.00000589452  0.99999410550  0.00000033013  0.00000480325
+# log_cash_by_current_liabilities              -0.42174772047  0.65589948854  0.00374576153  0.03502834570
+# size_small                                    1.65147119012  5.21464592219  0.02798778359  0.52901170454
+# size_large                                    0.36687124432  1.44321208540  0.08562622504  0.71903580712
+# size_v_large                                 -1.50204155526  0.22267509228  0.20387238306  1.42820268947
+# trunc_EBITDA                                 -0.00000156207  0.99999843793  0.00000002721  0.00000047776
+# cooperative                                  -2.25781374754  0.10457887082  0.08960711318  1.04598255830
+# nonprofit                                    -1.54704426217  0.21287625125  0.40088086783  1.00757765060
+# other                                        -0.42327781194  0.65489666972  0.51423922312  1.06714271877
+# private                                       0.48881547865  1.63038385123  0.03043773098  0.32275831254
+#                                                    z                    p
+# log_current_liabilities_by_total_liabilities   0.586              0.55784
+# trunc_tax                                     -1.227              0.21975
+# log_cash_by_current_liabilities              -12.040 < 0.0000000000000002
+# size_small                                     3.122              0.00180
+# size_large                                     0.510              0.60989
+# size_v_large                                  -1.052              0.29294
+# trunc_EBITDA                                  -3.270              0.00108
+# cooperative                                   -2.159              0.03088
+# nonprofit                                     -1.535              0.12468
+# other                                         -0.397              0.69163
+# private                                        1.514              0.12990
+# 
+# Likelihood ratio test=33128  on 11 df, p=< 0.00000000000000022
+# n= 28135, number of events= 3221
+
+# With frailty, assuming a PPL likelihood
+fit.cox.C.cluster <- coxph(Surv(years_to_event, censor==0) ~
+                              log_current_liabilities_by_total_liabilities
+                              + trunc_tax
+                              + log_cash_by_current_liabilities
+                              + size_small + size_large + size_v_large
+                              + trunc_EBITDA
+                              + cooperative + nonprofit + other + private
+                              + frailty(sector, "gamma"),
+                            data = data)
 
 
+W.C.cluster <- 1 / S.C.cluster
+data$W.C.cluster <- W.C.cluster
 
+fit.cox.IPCW.cluster <- coxph(Surv(years_to_event, censor) ~
+                                 log_current_liabilities_by_total_liabilities
+                                 + trunc_tax
+                                 + log_cash_by_current_liabilities
+                                 + size_small + size_large + size_v_large
+                                 + trunc_EBITDA
+                                 + cooperative + nonprofit + other + private
+                                 + frailty(sector, "gamma"),
+                              data = data, weights = W.C.cluster)
+fit.cox.IPCW.cluster
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+# Parametric shared frailty model
+select.parfm(Surv(years_to_event, censor) ~
+                log_current_liabilities_by_total_liabilities
+                + trunc_tax
+                + log_cash_by_current_liabilities
+                + size_small + size_large + size_v_large
+                + trunc_EBITDA
+                + cooperative + nonprofit + other + private,
+             data = data, cluster="sector")
+# ### - Parametric frailty models - ###
+# Progress status:
+#   'ok' = converged
+#   'nc' = not converged
+# 
+# Frailty
+# Baseline            none    gamma   invGau  posSta  lognor
+# exponential.........nc......nc......nc......nc......nc....
+# Weibull.............nc......nc......nc......nc......nc....
+# inWeibull...........nc......nc......nc......nc......nc....
+# Gompertz............nc......nc......nc......nc......nc....
+# loglogistic.........nc......nc......nc......nc......nc....
+# lognormal...........nc......nc......nc......nc......nc....
+# logskewnormal.......nc......nc......nc......nc......nc....
+# AIC:              none  gamma  ingau possta lognor
+# exponential   ----   ----   ----   ----   ----  
+#   weibull       ----   ----   ----   ----   ----  
+#   inweibull     ----   ----   ----   ----   ----  
+#   gompertz      ----   ----   ----   ----   ----  
+#   loglogistic   ----   ----   ----   ----   ----  
+#   lognormal     ----   ----   ----   ----   ----  
+#   logskewnormal ----   ----   ----   ----   ----  
+#   
+#   BIC:              none  gamma  ingau possta lognor
+# exponential   ----   ----   ----   ----   ----  
+#   weibull       ----   ----   ----   ----   ----  
+#   inweibull     ----   ----   ----   ----   ----  
+#   gompertz      ----   ----   ----   ----   ----  
+#   loglogistic   ----   ----   ----   ----   ----  
+#   lognormal     ----   ----   ----   ----   ----  
+#   logskewnormal ----   ----   ----   ----   ----  
