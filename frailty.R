@@ -33,24 +33,6 @@ data$EBTIDA <- NULL
 data <- data[data$sector!="",]
 
 # --- Transform variables / remove outliers
-
-# [x] total_liabilities                         -> use the log
-# [x] cash_by_total_assets                      -> use the log
-# [x] cash_by_current_liabilities               -> use the log
-# [x] current_assets_by_current_liabilities     -> use the log
-# [x] tax                                       -> use the truncation
-# [x] EBITDA                                    -> use the truncation
-# [x] roa                                       -> use the truncation
-# [x] financial_expenses_by_total_assets        -> use the truncation
-# [x] EBIT                                      -> use the truncation
-# [x] current_liabilites_by_total_liabilities   -> use the log
-# [x] working_capital_by_total_assets           -> use the truncation
-# [x] size_classification
-# [x] income_tax_by_total_assets                -> use the truncation
-# [x] sector
-# [x] n_employees                               -> use the log
-# [x] cooperative	nonprofit	other	private	public
-
 # total_liabilities
 data$log_total_liabilities <- log(data$total_liabilities)
 
@@ -245,8 +227,7 @@ data$trunc_income_tax_by_total_assets <- ifelse(data$income_tax_by_total_assets 
 # n_employees
 data$log_n_employees = log(data$n_employees)
 
-# Don't forget to report that we did this:
-# 3 observations are removed
+# We remove sectors with only 1 company and consider them as outliers
 data <- data[data$years_to_event!=0, ]
 data <- data %>%
   group_by(sector) %>%
@@ -254,388 +235,9 @@ data <- data %>%
   filter(n > 1) %>%
   select(-n)
 
-# --- Make visualizations of the continuous variables
-# total_liabilities
-jpeg(file = "visualizations/total_liabilities.jpeg",
-     width = 3000, height = 3000, res = 400)
-par(mfrow=c(2, 2))
-par(family="Times")
-hist(data$total_liabilities, breaks=50,
-     main="total_liabilities")
-hist(data$log_total_liabilities, breaks=50,
-     main="log(total_liabilities)")
-boxplot(data$total_liabilities,
-     main="total_liabilities")
-boxplot(data$log_total_liabilities,
-     main="log(total_liabilities)")
-dev.off()
-
-# cash_by_total_assets
-jpeg(file = "visualizations/cash_by_total_assets.jpeg",
-     width = 3000, height = 3000, res = 400)
-par(mfrow=c(2, 2))
-par(mar=c(2, 2, 2, 2))
-par(family="Times")
-hist(data$cash_by_total_assets, breaks=50,
-     main="cash_by_total_assets", ylab="frequency")
-hist(data$log_cash_by_total_assets, breaks=50,
-     main="log(cash_by_total_assets)", ylab="frequency")
-boxplot(data$cash_by_total_assets,
-     main="cash_by_total_assets")
-boxplot(data$log_cash_by_total_assets,
-     main="log(cash_by_total_assets)")
-dev.off()
-
-# cash_by_current_liabilities
-jpeg(file = "visualizations/cash_by_current_liabilities.jpeg",
-     width = 3000, height = 3000, res = 400)
-par(mfrow=c(2, 2))
-par(mar=c(2, 2, 2, 2))
-par(family="Times")
-hist(data$cash_by_current_liabilities, breaks=50,
-     main="cash_by_current_liabilities", ylab="frequency")
-hist(data$log_cash_by_current_liabilities, breaks=50,
-     main="log(cash_by_current_liabilities)", ylab="frequency")
-boxplot(data$cash_by_current_liabilities,
-     main="cash_by_current_liabilities")
-boxplot(data$log_cash_by_current_liabilities,
-     main="log(cash_by_current_liabilities)")
-dev.off()
-
-# current_assets_by_current_liabilities
-jpeg(file = "visualizations/current_assets_by_current_liabilities.jpeg",
-     width = 3000, height = 3000, res = 400)
-par(mfrow=c(2, 2))
-par(mar=c(3, 3, 3, 3))
-par(family="Times")
-hist(data$current_assets_by_current_liabilities, breaks=50,
-     main="current_assets_by_current_liabilities")
-hist(data$log_current_assets_by_current_liabilities, breaks=50,
-     main="log(current_assets_by_current_liabilities)")
-boxplot(data$current_assets_by_current_liabilities,
-        main="current_assets_by_current_liabilities")
-boxplot(data$log_current_assets_by_current_liabilities,
-        main="log(current_assets_by_current_liabilities)")
-dev.off()
-
-# tax
-jpeg(file = "visualizations/tax.jpeg",
-     width = 4500, height = 3000, res = 400)
-par(mfrow=c(2, 3))
-par(mar=c(3, 3, 3, 3))
-par(family="Times")
-hist(data$tax, breaks=50,
-     main="tax")
-hist(data$log_tax, breaks=50,
-     main="log(tax)")
-hist(data$trunc_tax, breaks=50,
-     main="trunc(tax)")
-boxplot(data$tax,
-        main="tax")
-boxplot(data$log_tax,
-        main="log(tax)")
-boxplot(data$trunc_tax,
-        main="trunc(tax)")
-dev.off()
-
-# EBITDA
-jpeg(file = "visualizations/EBITDA.jpeg",
-     width = 4500, height = 3000, res = 400)
-par(mfrow=c(2, 3))
-par(mar=c(3, 3, 3, 3))
-par(family="Times")
-hist(data$EBITDA, breaks=50,
-     main="EBITDA")
-hist(data$log_EBITDA, breaks=50,
-     main="log(EBITDA)")
-hist(data$trunc_EBITDA, breaks=50,
-     main="trunc(EBITDA)")
-boxplot(data$EBITDA,
-        main="EBITDA")
-boxplot(data$log_EBITDA,
-        main="log(EBITDA)")
-boxplot(data$trunc_EBITDA,
-        main="trunc(EBITDA)")
-dev.off()
-
-# ROA
-jpeg(file = "visualizations/roa.jpeg",
-     width = 3000, height = 3000, res = 400)
-par(mfrow=c(2, 2))
-par(mar=c(3, 3, 3, 3))
-par(family="Times")
-hist(data$roa, breaks=50,
-     main="roa")
-hist(data$trunc_roa, breaks=50,
-     main="trunc(roa)")
-boxplot(data$roa,
-        main="roa")
-boxplot(data$trunc_roa,
-        main="trunc(roa)")
-dev.off()
-
-# financial_expenses_by_total_assets
-jpeg(file = "visualizations/financial_expenses_by_total_assets.jpeg",
-     width = 4500, height = 3000, res = 400)
-par(mfrow=c(2, 3))
-par(mar=c(3, 3, 3, 3))
-par(family="Times")
-hist(data$financial_expenses_by_total_assets, breaks=50,
-     main="financial_expenses_by_total_assets")
-hist(data$log_financial_expenses_by_total_assets, breaks=50,
-     main="log(financial_expenses_by_total_assets)")
-hist(data$trunc_financial_expenses_by_total_assets, breaks=50,
-     main="trunc(financial_expenses_by_total_assets)")
-boxplot(data$financial_expenses_by_total_assets,
-        main="financial_expenses_by_total_assets")
-boxplot(data$log_financial_expenses_by_total_assets,
-        main="log(log_financial_expenses_by_total_assets)")
-boxplot(data$trunc_financial_expenses_by_total_assets,
-        main="trunc(log_financial_expenses_by_total_assets)")
-dev.off()
-
-# EBIT
-jpeg(file = "visualizations/EBIT.jpeg",
-     width = 4500, height = 3000, res = 400)
-par(mfrow=c(2, 3))
-par(mar=c(3, 3, 3, 3))
-par(family="Times")
-hist(data$EBIT, breaks=50,
-     main="EBIT")
-hist(data$log_EBIT, breaks=50,
-     main="log(EBIT)")
-hist(data$trunc_EBIT, breaks=50,
-     main="trunc(EBIT)")
-boxplot(data$EBIT,
-        main="EBIT")
-boxplot(data$log_EBIT,
-        main="log(EBIT)")
-boxplot(data$trunc_EBIT,
-        main="trunc(EBIT)")
-dev.off()
-
-# current_liabilities_by_total_liabilities
-jpeg(file = "visualizations/current_liabilities_by_total_liabilities.jpeg",
-     width = 3000, height = 3000, res = 400)
-par(mfrow=c(2, 2))
-par(mar=c(3, 3, 3, 3))
-par(family="Times")
-hist(data$current_liabilites_by_total_liabilities, breaks=50,
-     main="current_liabilities_by_total_liabilities")
-hist(data$log_current_liabilities_by_total_liabilities, breaks=50,
-     main="log(current_liabilites_by_total_liabilities)")
-boxplot(data$current_liabilites_by_total_liabilities,
-        main="current_liabilities_by_total_liabilities")
-boxplot(data$log_current_liabilities_by_total_liabilities,
-        main="log(current_liabilites_by_total_liabilities)")
-dev.off()
-
-# working_capital_by_total_assets
-jpeg(file = "visualizations/working_capital_by_total_assets.jpeg",
-     width = 4500, height = 3000, res = 400)
-par(mfrow=c(2, 3))
-par(mar=c(3, 3, 3, 3))
-par(family="Times")
-hist(data$working_capital_by_total_assets, breaks=50,
-     main="working_capital_by_total_assets")
-hist(data$log_working_capital_by_total_assets, breaks=50,
-     main="log(working_capital_by_total_assets)")
-hist(data$trunc_working_capital_by_total_assets, breaks=50,
-     main="trunc(working_capital_by_total_assets)")
-boxplot(data$working_capital_by_total_assets,
-        main="working_capital_by_total_assets")
-boxplot(data$log_working_capital_by_total_assets,
-        main="log(working_capital_by_total_assets)")
-boxplot(data$trunc_working_capital_by_total_assets,
-        main="trunc(working_capital_by_total_assets)")
-dev.off()
-
-# Size classification
-jpeg(file = "visualizations/size_classification.jpeg",
-     width = 3000, height = 3000, res = 400)
-par(mfrow=c(1, 1))
-par(mar=c(3, 3, 3, 3))
-par(family="Times")
-barplot(table(data$size_classification), main = "Size classification")
-dev.off()
-
-# income_tax_by_total_assets
-jpeg(file = "visualizations/income_tax_by_total_assets.jpeg",
-     width = 4500, height = 3000, res = 400)
-par(mfrow=c(2, 3))
-par(mar=c(3, 3, 3, 3))
-par(family="Times")
-hist(data$income_tax_by_total_assets, breaks=50,
-     main="income_tax_by_total_assets")
-hist(data$log_income_tax_by_total_assets, breaks=50,
-     main="log(income_tax_by_total_assets)")
-hist(data$trunc_income_tax_by_total_assets, breaks=50,
-     main="trunc(income_tax_by_total_assets)")
-boxplot(data$income_tax_by_total_assets,
-        main="income_tax_by_total_assets")
-boxplot(data$log_income_tax_by_total_assets,
-        main="log(income_tax_by_total_assets)")
-boxplot(data$trunc_income_tax_by_total_assets,
-        main="trunc(income_tax_by_total_assets)")
-dev.off()
-
-# n_employees
-jpeg(file = "visualizations/n_employees.jpeg",
-     width = 3000, height = 3000, res = 400)
-par(mfrow=c(2, 2))
-par(mar=c(3, 3, 3, 3))
-par(family="Times")
-hist(data$n_employees, breaks=50,
-     main="n_employees")
-hist(data$log_n_employees, breaks=50,
-     main="log(n_employees)")
-boxplot(data$n_employees,
-        main="n_employees")
-boxplot(data$log_n_employees,
-        main="log(n_employees)")
-dev.off()
-
-# Kaplan-Meier estimator
-jpeg(file = "visualizations/KM_estimator.jpeg",
-     width = 3000, height = 3000, res = 400)
-par(mfrow=c(2, 2))
-par(mar=c(4, 4, 4, 4))
-par(family="Times")
-plot(survfit(Surv(years_to_event, censor_total) ~ 1, data=data),
-     main="All causes confounded", xlab="Years to event", ylab="KM estimator")
-plot(survfit(Surv(years_to_event, censor_mer) ~ 1, data=data),
-     main="Main event = merger", xlab="Years to event", ylab="KM estimator")
-plot(survfit(Surv(years_to_event, censor_liq) ~ 1, data=data),
-     main="Main event = liquidation", xlab="Years to event", ylab="KM estimator")
-plot(survfit(Surv(years_to_event, censor) ~ 1, data=data),
-     main="Main event = bankruptcy", xlab="Years to event", ylab="KM estimator")
-dev.off()
-
-# Sector clusters
-jpeg(file = "visualizations/sector.jpeg",
-     width = 4000, height = 3000, res = 400)
-par(mfrow=c(1, 1))
-par(mar=c(3, 30, 3, 3))
-par(family="Times")
-data$sector <- replace(data$sector, data$sector=="T - Activities of households as employers; undifferentiated goods- and services-producing activities of households for own use", "T - Activities of households as employers")
-barplot(sort(table(data$sector), decreasing = T), las=2, horiz=T)
-dev.off()
-
-# Event types
-jpeg(file = "visualizations/event.jpeg",
-     width = 4000, height = 3000, res = 400)
-par(mfrow=c(1, 1))
-par(mar=c(3, 20, 3, 3))
-par(family="Times")
-data$status <- replace(data$status, data$status=="alive", "Alive")
-barplot(sort(table(data$status), decreasing = T), las=2,
-        horiz=T, xlim=c(0, 20000), beside=T)
-dev.off()
-
-# Histogram of survival times
-jpeg(file = "visualizations/survival_time.jpeg",
-     width = 3000, height = 3000, res = 400)
-par(mfrow=c(1, 1))
-par(mar=c(3, 3, 3, 3))
-par(family="Times")
-hist(data$years_to_event, main="Years to event", breaks=50)
-dev.off()
-
-# Correlation plot
-cor.mat <- cor(matrix(c(
-  data$log_cash_by_total_assets,
-  data$log_cash_by_current_liabilities,
-  data$log_current_assets_by_current_liabilities,
-  data$trunc_tax,
-  data$trunc_EBITDA,
-  data$trunc_roa,
-  data$trunc_financial_expenses_by_total_assets,
-  data$trunc_EBIT,
-  data$log_current_liabilities_by_total_liabilities,
-  data$trunc_working_capital_by_total_assets,
-  data$log_income_tax_by_total_assets,
-  data$log_n_employees), nrow=28135)
-)
-cor.mat <- round(cor.mat, 4)
-cor.mat <- as.data.frame(cor.mat)
-rownames(cor.mat) <- c(
- "1 log_cash_by_total_assets",
- "2 log_cash_by_current_liabilities",
- "3 log_current_assets_by_current_liabilities",
- "4 trunc_tax",
- "5 trunc_EBITDA",
- "6 trunc_roa",
- "7 trunc_financial_expenses_by_total_assets",
- "8 trunc_EBIT",
- "9 log_current_liabilities_by_total_liabilities",
- "10 trunc_working_capital_by_total_assets",
- "11 log_income_tax_by_total_assets",
- "12 log_n_employees"
-)
-colnames(cor.mat) <- c(
- "1",
- "2",
- "3",
- "4",
- "5",
- "6",
- "7",
- "8",
- "9",
- "10",
- "11",
- "12"
-)
-cor.mat
-#                                                      1       2       3       4       5       6       7       8
-# 1 log_cash_by_total_assets                      1.0000  0.8921  0.2940  0.0049 -0.0455  0.1337 -0.1380  0.0335
-# 2 log_cash_by_current_liabilities               0.8921  1.0000  0.5940  0.0572  0.0109  0.2376 -0.2707  0.0818
-# 3 log_current_assets_by_current_liabilities     0.2940  0.5940  1.0000  0.1633  0.0819  0.2782 -0.3359  0.1401
-# 4 trunc_tax                                     0.0049  0.0572  0.1633  1.0000  0.7125  0.2189 -0.1431  0.7249
-# 5 trunc_EBITDA                                 -0.0455  0.0109  0.0819  0.7125  1.0000  0.2733 -0.1288  0.8756
-# 6 trunc_roa                                     0.1337  0.2376  0.2782  0.2189  0.2733  1.0000 -0.3075  0.3599
-# 7 trunc_financial_expenses_by_total_assets     -0.1380 -0.2707 -0.3359 -0.1431 -0.1288 -0.3075  1.0000 -0.1386
-# 8 trunc_EBIT                                    0.0335  0.0818  0.1401  0.7249  0.8756  0.3599 -0.1386  1.0000
-# 9 log_current_liabilities_by_total_liabilities -0.0889 -0.5200 -0.7440 -0.1239 -0.1237 -0.2756  0.3486 -0.1202
-# 10 trunc_working_capital_by_total_assets       -0.1162 -0.0625  0.2525  0.0400  0.0595  0.1061 -0.1318  0.0763
-# 11 log_income_tax_by_total_assets               0.1678  0.2205  0.2522  0.2863  0.1756  0.3840 -0.1998  0.2557
-# 12 log_n_employees                             -0.0963 -0.1326 -0.0613  0.4076  0.4565  0.0289 -0.0581  0.3148
-# 9      10      11      12
-# 1 log_cash_by_total_assets                     -0.0889 -0.1162  0.1678 -0.0963
-# 2 log_cash_by_current_liabilities              -0.5200 -0.0625  0.2205 -0.1326
-# 3 log_current_assets_by_current_liabilities    -0.7440  0.2525  0.2522 -0.0613
-# 4 trunc_tax                                    -0.1239  0.0400  0.2863  0.4076
-# 5 trunc_EBITDA                                 -0.1237  0.0595  0.1756  0.4565
-# 6 trunc_roa                                    -0.2756  0.1061  0.3840  0.0289
-# 7 trunc_financial_expenses_by_total_assets      0.3486 -0.1318 -0.1998 -0.0581
-# 8 trunc_EBIT                                   -0.1202  0.0763  0.2557  0.3148
-# 9 log_current_liabilities_by_total_liabilities  1.0000 -0.0958 -0.1584  0.0911
-# 10 trunc_working_capital_by_total_assets       -0.0958  1.0000  0.0892  0.0603
-# 11 log_income_tax_by_total_assets              -0.1584  0.0892  1.0000  0.0143
-# 12 log_n_employees                              0.0911  0.0603  0.0143  1.0000
-
-
 # --- Stepwise variable selection using AIC
 
-# [x] total_liabilities                         -> do not use this variable
-# [x] cash_by_total_assets                      -> use the log
-# [x] cash_by_current_liabilities               -> use the log
-# [x] current_assets_by_current_liabilities     -> use the log
-# [x] tax                                       -> use the truncation
-# [x] EBITDA                                    -> use the truncation
-# [x] roa                                       -> use the truncation
-# [x] financial_expenses_by_total_assets        -> use the truncation
-# [x] EBIT                                      -> use the truncation
-# [x] current_liabilites_by_total_liabilities   -> use the log
-# [x] working_capital_by_total_assets           -> use the truncation
-# [x] size_classification
-# [x] income_tax_by_total_assets                -> use the truncation
-# [x] sector
-# [x] n_employees                               -> use the log
-# [x] cooperative	nonprofit	other	private	public
-
 AIC_df = data.frame()
-frailty_df = data.frame()
 
 # Iteration 1
 fit <- emfrail(Surv(years_to_event, censor) ~
@@ -701,8 +303,6 @@ fit.1 <- emfrail(Surv(years_to_event, censor) ~
                  data = data)
 fit.1.AIC <- 2 * 1 - 2 * fit.1$loglik[2]
 AIC_df <- rbind(AIC_df, list("log_current_liabilities_by_total_liabilities", "Iteration 1", fit.1.AIC))
-frailty_df <- rbind(frailty_df, fit.1$frail)
-names(frailty_df) <- names(fit.1$frail)
 
 fit <- emfrail(Surv(years_to_event, censor) ~
                    trunc_working_capital_by_total_assets
@@ -788,7 +388,6 @@ fit.2 <- emfrail(Surv(years_to_event, censor) ~
                  data = data)
 fit.2.AIC <- 2 * 2 - 2 * fit.2$loglik[2]
 AIC_df <- rbind(AIC_df, list("trunc_tax", "Iteration 2", fit.2.AIC))
-frailty_df <- rbind(frailty_df, fit.2$frail)
 
 fit <- emfrail(Surv(years_to_event, censor) ~
                    log_current_liabilities_by_total_liabilities
@@ -896,7 +495,6 @@ fit.3 <- emfrail(Surv(years_to_event, censor) ~
                  data = data)
 fit.3.AIC <- 2 * 3 - 2 * fit.3$loglik[2]
 AIC_df <- rbind(AIC_df, list("log_cash_by_current_liabilities", "Iteration 3", fit.3.AIC))
-frailty_df <- rbind(frailty_df, fit.3$frail)
 
 fit <- emfrail(Surv(years_to_event, censor) ~
                    log_current_liabilities_by_total_liabilities
@@ -1083,7 +681,6 @@ fit.4 <- emfrail(Surv(years_to_event, censor) ~
                  data = data)
 fit.4.AIC <- 2 * 6 - 2 * fit.4$loglik[2]
 AIC_df <- rbind(AIC_df, list("size_dummmies", "Iteration 4", fit.4.AIC))
-frailty_df <- rbind(frailty_df, fit.4$frail)
 
 fit <- emfrail(Surv(years_to_event, censor) ~
                    log_current_liabilities_by_total_liabilities
@@ -1162,7 +759,6 @@ fit.5 <- emfrail(Surv(years_to_event, censor) ~
                  data = data)
 fit.5.AIC <- 2 * 7 - 2 * fit.5$loglik[2]
 AIC_df <- rbind(AIC_df, list("trunc_EBITDA", "Iteration 5", fit.5.AIC))
-frailty_df <- rbind(frailty_df, fit.5$frail)
 
 fit <- emfrail(Surv(years_to_event, censor) ~
                    log_current_liabilities_by_total_liabilities
@@ -1362,7 +958,6 @@ fit.6 <- emfrail(Surv(years_to_event, censor) ~
                  data = data)
 fit.6.AIC <- 2 * 11 - 2 * fit.6$loglik[2]
 AIC_df <- rbind(AIC_df, list("type_dummies", "Iteration 6", fit.6.AIC))
-frailty_df <- rbind(frailty_df, fit.6$frail)
 
 AIC_df[AIC_df$iteration=="Iteration 6",]
 #                                     Variable   iteration      AIC
